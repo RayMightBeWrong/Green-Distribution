@@ -175,18 +175,18 @@ modify_list(moto, [B,M,C], [B,NEWM,C]):- NEWM is M + 1.
 modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 
 
-%8 --- done (por verificar)
-entregas_tempo(Di, Df, N):- lista_de_entregas(L), entregas_tempo(Di, Df, L, N), !.
+%8 --- done
+entregas_tempo(Hi,Di,Hf, Df, N):- lista_de_entregas(L), entregas_tempo(Hi,Di,Hf, Df, L, N), !.
+entregas_tempo(_,_,_, _, [], 0).
+entregas_tempo(Hi,Di, Hf,Df, [registo(_,_,ARG3)|T], G):- 
+	entrega_in_time(Hi, Di, Hf, Df, ARG3),
+	entregas_tempo(Hi,Di, Hf,Df, T, N),
+	G is N + 1.
+entregas_tempo(Hi,Di, Hf,Df, [_|T], G) :- entregas_tempo(Hi,Di, Hf,Df, T, G).
 
-entregas_tempo(_, _, [], 0).
-entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [registo(_,_,ARG3)|T], G):- 
-	isget_data_entrega(D/M/A, ARG3),
-	A =< Af, A >= Ai, M =< Mf, M >= Mi, D =< Df, D >= Di,
-	entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, N), G is N + 1.
-entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [_|T], G) :- entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, G).
 
+%9 --- done
 
-%9 --- done (por verificar)
 enc_entregue_naoentregue(E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
 
 enc_entregue_naoentregue([], 0, 0).
