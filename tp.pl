@@ -160,7 +160,7 @@ avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
 
 %7
 %adicionar intervalo de tempo
-p_transportes(B, M, C, ):- lista_de_entregas(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
+%FIXME: p_transportes(B, M, C, ):- lista_de_entregas(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
 
 p_transporte(_, [], 0).
 p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):- 
@@ -169,18 +169,21 @@ p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):-
 p_transporte(V, [_|T], S):- p_transporte(V, T, S).
 
 
-%8 --- done (por verificar)
-entregas_tempo(Di, Df, N):- lista_de_entregas(L), entregas_tempo(Di, Df, L, N), !.
-
-entregas_tempo(_, _, [], 0).
-entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [registo(_,_,ARG3)|T], G):- 
+%8 --- done
+entregas_tempo(Hi,Di,Hf, Df, N):- lista_de_entregas(L), entregas_tempo(Hi,Di,Hf, Df, L, N), !.
+entregas_tempo(_,_,_, _, [], 0).
+entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, [registo(_,_,ARG3)|T], G):- 
 	isget_data_entrega(D/M/A, ARG3),
-	A =< Af, A >= Ai, M =< Mf, M >= Mi, D =< Df, D >= Di,
-	entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, N), G is N + 1.
-entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [_|T], G) :- entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, G).
+	isget_hora_entrega(Hora/Minuto,ARG3),
+	((A < Af, A > Ai); (A =:= Af, M < Mf) ; (A =:= Ai, M > Mi) ; (A =:= Ai, M =:= Mi , D > Di , D < Df) ; (A =:= Af, M =:= Mf , D < Df, D > Di);
+	(A =:= Ai,M =:= Mi , D =:= Di,(Hora > Hi ; (Hora =:= Hi ,Minuto >= Mii)));
+	(A =:= Af,M =:= Mf , D =:= Df,(Hora < Hf ; (Hora =:= Hf , Minuto =< Mif)))),
+	entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, T, N),
+	G is N + 1.
+entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, [_|T], G) :- entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, T, G).
 
 
-%9 --- done (por verificar)
+%9 --- done
 
 enc_entregue_naoentregue(E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
 

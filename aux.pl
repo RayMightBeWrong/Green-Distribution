@@ -15,5 +15,7 @@ isget_local(L, encomenda(_,L,_,_,_)).
 isget_peso(P, encomenda(_,_,P,_,_)).
 isget_preco(P, encomenda(_,_,_,P,_)).
 
+isget_hora_entrega(0, prazo(_,_, 0,_)).
+isget_hora_entrega(H/M, prazo(_,_, H/M ,_)).
 isget_data_entrega(0, prazo(_, _, _, 0)).
 isget_data_entrega(D/M/A, prazo(_, _, _, D/M/A)).
