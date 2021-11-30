@@ -179,15 +179,11 @@ modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 %8 --- done
 entregas_tempo(Hi,Di,Hf, Df, N):- lista_de_entregas(L), entregas_tempo(Hi,Di,Hf, Df, L, N), !.
 entregas_tempo(_,_,_, _, [], 0).
-entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, [registo(_,_,ARG3)|T], G):- 
-	isget_data_entrega(D/M/A, ARG3),
-	isget_hora_entrega(Hora/Minuto,ARG3),
-	((A < Af, A > Ai); (A =:= Af, M < Mf) ; (A =:= Ai, M > Mi) ; (A =:= Ai, M =:= Mi , D > Di , D < Df) ; (A =:= Af, M =:= Mf , D < Df, D > Di);
-	(A =:= Ai,M =:= Mi , D =:= Di,(Hora > Hi ; (Hora =:= Hi ,Minuto >= Mii)));
-	(A =:= Af,M =:= Mf , D =:= Df,(Hora < Hf ; (Hora =:= Hf , Minuto =< Mif)))),
-	entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, T, N),
+entregas_tempo(Hi,Di, Hf,Df, [registo(_,_,ARG3)|T], G):- 
+	entrega_in_time(Hi, Di, Hf, Df, ARG3),
+	entregas_tempo(Hi,Di, Hf,Df, T, N),
 	G is N + 1.
-entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, [_|T], G) :- entregas_tempo(Hi/Mii,Di/Mi/Ai, Hf/Mif,Df/Mf/Af, T, G).
+entregas_tempo(Hi,Di, Hf,Df, [_|T], G) :- entregas_tempo(Hi,Di, Hf,Df, T, G).
 
 
 %9 --- done
