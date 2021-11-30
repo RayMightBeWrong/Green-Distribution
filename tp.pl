@@ -17,7 +17,7 @@ g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
 
 %extras:
 %quando gastou um cliente na GreenDistribution
-%...
+%calcular a média de satisfação de um cliente
 
 
 %1 --- done

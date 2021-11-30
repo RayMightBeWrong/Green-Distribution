@@ -15,3 +15,14 @@ lista_de_entregas([registo(entrega(e1, transporte(bicicleta, 0)), encomenda(c1, 
 %varia entre 5 e 10 para motos e carros
 
 %ser consistente ao fazer o caso prático com os veículos que os estafetas usam
+
+
+
+%!!!
+%!!!
+%!!!
+%adicionar ao mapa em vez do tempo coeficiente de dificuldade de travessia 
+%!!!
+%!!!
+%!!!
+
