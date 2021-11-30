@@ -1,38 +1,23 @@
 :- include('mapa.pl').
-
-estafeta(e1).
-estafeta(e2).
-estafeta(e3).
-
-%meio_de_transporte(volume máximo em kg, v média em km/h)
-max_bicicleta(5, 10).
-max_moto(20, 35).
-max_carro(100, 25).
-%fazer_função_max
-
-cliente(c1).
-cliente(c2).
-cliente(c3).
-
-
-%adicionar local, distância, hora em vez de data(?)
+:- include('registos.pl').
+:- include('aux.pl').
 
 %encomenda(nr, cliente, preço, prazo)
-%entrega(nr, estafeta, cliente, meio_de_transporte, volume, date_de_entrega, classificação)
+%entrega(nr, estafeta, cliente, meio_de_transporte, volume, data_de_entrega, classificação)
 
-g([encomenda(1, c1, 15, 18/11/2021), encomenda(2, c1, 25, 16/11/2021), encomenda(3, c2, 26, 18/11/2021)], [entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1), entrega(2, e1, c1, moto, 6, 16/11/2021,2), entrega(3, e2, c2, carro, 7, 18/11/2021,4)]).
-
-g1([ entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
-	 entrega(2, e2, c1, moto, 6, 16/11/2021,2), 
-	 entrega(3, e1, c2, moto, 7, 18/11/2021,4)]).
-
-
-%entrega_estafeta______________peso_volume_maybe_____________
+%adicionar estimativa de tempo ao mapa?
+%dizer o tempo máximo de entrega fica como prazo de entrega
 %estado_entregue_ou_não
-%assert encomenda?
-%classificação_nota
-
 %penalização_por_não_cumprir_entregas
+g([encomenda(1, c1, 15, 18/11/2021), encomenda(2, c1, 25, 16/11/2021), encomenda(3, c2, 26, 18/11/2021)], [entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1), entrega(2, e1, c1, moto, 6, 16/11/2021,2), entrega(3, e2, c2, bicicleta, 7, 18/11/2021,4), entrega(3, e2, c2, moto, 7, 18/11/2021,4)]).
+
+g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
+	entrega(2, e2, c1, moto, 6, 16/11/2021,2), 
+	entrega(3, e1, c2, moto, 7, 18/11/2021,4)]).
+
+%extras:
+%quando gastou um cliente na GreenDistribution
+%...
 
 
 %1
@@ -50,14 +35,12 @@ mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):-
 	mais_ecologico(T, NEWLE, S).
 
 mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):- 
-	not(estafeta_pertence(E, R1, LE)), 
+	not(estafeta_pertence(E, _, LE)), 
 	add_veiculo_tuple(E/0/0/0, V, R),
 	append([R], LE, NEWLE),
-	write(LE), write('\n'),
-	write(NEWLE), write('\n'),
 	mais_ecologico(T, NEWLE, S).
 
-estafeta_pertence(E, E/B/M/C, [E/B/M/C|L]).
+estafeta_pertence(E, E/B/M/C, [E/B/M/C|_]).
 estafeta_pertence(E, R, [Y/_/_/_|L]):- E \= Y, estafeta_pertence(E, R, L).
 
 replace_estafeta(E/B/M/C, [E/_/_/_|L], [E/B/M/C|L]). 
@@ -71,7 +54,15 @@ add_veiculo_tuple(E/B/M/C, moto, E/B/NEWM/C):- NEWM is M + 1.
 add_veiculo_tuple(E/B/M/C, carro, E/B/M/NEWC):- NEWC is C + 1.
 
 %select_mais_ecologico por fazer obviamente
-select_mais_ecologico([E/_/_/_|T], E):- write(E).
+select_mais_ecologico([E/_/_/_], E):- !.
+select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
+	B1 > B2, !,
+	select_mais_ecologico([E1/B1/M1/C1|T], Best).
+select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
+	B1 == B2,
+	write("i'm here"),
+	select_mais_ecologico([E1/B1/M1/C1|T], Best).
+select_mais_ecologico([_|T], Best):- select_mais_ecologico(T, Best).
 
 %2
 identificar_estafetas([], _, []).
@@ -151,10 +142,18 @@ p_transporte(V, [_|T], S):- p_transporte(V, T, S).
 
 
 %10
-peso_carregado(E, D/M/A, S):- g(_, L), peso_carregado(E, D/M/A, L, S).
+peso_carregadoOG(E, D/M/A, S):- g(_, L), peso_carregadoOG(E, D/M/A, L, S).
+
+peso_carregadoOG(_, _, [], 0).
+peso_carregadoOG(E, D/M/A, [entrega(_,E,_,_,N,D/M/A,_)|T], S):- 
+	peso_carregadoOG(E,D/M/A,T,S1), S is S1 + N, !.
+peso_carregadoOG(E, D/M/A, [_|T], S):- peso_carregadoOG(E, D/M/A, T, S).
+
+
+peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
 
 peso_carregado(_, _, [], 0).
-peso_carregado(E, D/M/A, [entrega(_,E,_,_,N,D/M/A,_)|T], S):- 
-	peso_carregado(E,D/M/A,T,S1), S is S1 + N, !.
+peso_carregado(E, D/M/A, [registo(ARG1,ARG2,ARG3)|T], S):- 
+	same_estafeta(E, ARG1), same_data_entrega(D/M/A, ARG3), get_preco(P, ARG2),
+	peso_carregado(E,D/M/A,T,S1), S is S1 + P, !.
 peso_carregado(E, D/M/A, [_|T], S):- peso_carregado(E, D/M/A, T, S).
-
