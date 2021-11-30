@@ -171,11 +171,20 @@ p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):-
 p_transporte(V, [_|T], S):- p_transporte(V, T, S).
 
 
-%8
+%8 -- Done (por verificar)
 
+entregas_tempo(Di,Df,N) :-  lista_de_entregas(L) , entregas_tempo(Di,Df,L,N), !.
+entregas_tempo(Di,Df,[],0).
+entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- isget_data_entrega(D/M/A,P) , A =< Af , A >= Ai , M =< Mf , M >= Mi , D =< Df , D >= Di ,
+							entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,N) , G is N+1.
+entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,G).
 
-%9
+%9 -- Done (por verificar)
 
+enc_entregue_naoentregue(E,N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
+enc_entregue_naoentregue([],0,0).
+enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- isget_data_entrega(D,P) , D =:= 0 , enc_entregue_naoentregue(T,E,G),N is G+1.
+enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- enc_entregue_naoentregue(T,G,N) , E is G+1.
 
 %10 --- done
 peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
