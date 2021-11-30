@@ -2,18 +2,10 @@
 :- include('registos.pl').
 :- include('aux.pl').
 
-%encomenda(nr, cliente, preço, prazo)
-%entrega(nr, estafeta, cliente, meio_de_transporte, volume, data_de_entrega, classificação)
 
 %adicionar estimativa de tempo ao mapa?
 %dizer o tempo máximo de entrega fica como prazo de entrega
-%estado_entregue_ou_não
 %penalização_por_não_cumprir_entregas
-g([encomenda(1, c1, 15, 18/11/2021), encomenda(2, c1, 25, 16/11/2021), encomenda(3, c2, 26, 18/11/2021)], [entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1), entrega(2, e1, c1, moto, 6, 16/11/2021,2), entrega(3, e2, c2, bicicleta, 7, 18/11/2021,4), entrega(3, e2, c2, moto, 7, 18/11/2021,4)]).
-
-g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
-	entrega(2, e2, c1, moto, 6, 16/11/2021,2), 
-	entrega(3, e1, c2, moto, 7, 18/11/2021,4)]).
 
 %extras:
 %quando gastou um cliente na GreenDistribution
@@ -137,25 +129,16 @@ get_Nelements(_, [], []).
 get_Nelements(N, [X/_|T1], [X|T2]):- NEWN is N - 1, get_Nelements(NEWN, T1, T2).
 
 
-%6
-%-- calcular a classificação média de satisfação de cliente para um determinado estafeta;
-%-- avaliacao_estafeta(Lista de entregas,cliente,estafeta avaliar,Resultado acumulado)
+%6 --- done
+avaliacao_estafeta(E, S):- lista_de_entregas(L), avaliacao_estafeta(L, E, 0, 0, S).
 
-%falta caso nulo
-%!
-%!
-%!
-%!
-%!
-
-avaliacao_estafeta(List,E,Result) :- avaliacao_estafeta(List,E,0,0,Result).
-
-avaliacao_estafeta([],_,R,C,Result) :- Result is div(R,C).
-avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
-			R1 is Cls + R,
-			C1 is C + 1,
-			avaliacao_estafeta(T,E,R1,C1,Res).
-avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
+avaliacao_estafeta([], _, 0, 0, 0).
+avaliacao_estafeta([], _, R, N, S):- S is R / N.
+avaliacao_estafeta([registo(ARG1,ARG2,_)|T], E, R, N, S) :-
+	isget_estafeta(E, ARG1), isget_nota(C, ARG2),
+	NEWR is C + R, NEWN is N + 1, !,
+	avaliacao_estafeta(T, E, NEWR, NEWN, S).
+avaliacao_estafeta([_|T], E, R, N, S):- avaliacao_estafeta(T, E, R, N, S).
 
 
 %7 --- done
