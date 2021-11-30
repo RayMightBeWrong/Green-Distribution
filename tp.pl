@@ -160,7 +160,6 @@ avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
 
 %7 --- done
 p_transportes(B, M, C, Hi, Di, Hf, Df):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L, Hi, Di, Hf, Df).
->>>>>>> 3cd7b4c5ae707cf162afd6f5c606644756029acc
 
 p_transporte(L, L, [], _, _, _, _).
 p_transporte(S, L, [registo(ARG1,_,ARG3)|T], Hi, Di, Hf, Df):- 
