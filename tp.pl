@@ -96,9 +96,8 @@ valor_faturado(D/M/A, [registo(_,ARG2,ARG3)|T], S):-
 valor_faturado(D/M/A, [_|T], S):- valor_faturado(D/M/A, T, S).
 
 
-%5
-% ir buscar os mais procurados
-mais_pzona(N, S):- lista_de_entregas(L), build_mais_pzona(L, [], R), insert_sort(R, S).
+%5 --- done
+mais_pzona(N, S):- lista_de_entregas(L), build_mais_pzona(L, [], R1), insert_sort(R1, R2), get_Nelements(N, R2, S).
 
 build_mais_pzona([], L, L).
 build_mais_pzona([registo(_,ARG2,_)|T], [], S):-
@@ -130,7 +129,9 @@ insert(X/N1, [Y/N2|T], [Y/N2|NEWT]):- N1 < N2, insert(X/N1, T, NEWT).
 insert(X/N1, [Y/N2|T], [X/N1,Y/N2|T]):- N1 >= N2.
 insert(X/N, [], [X/N]).
 
-%get N elements from list
+get_Nelements(0, _, []).
+get_Nelements(_, [], []).
+get_Nelements(N, [X/_|T1], [X|T2]):- NEWN is N - 1, get_Nelements(NEWN, T1, T2).
 
 
 %6
