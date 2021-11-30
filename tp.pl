@@ -158,15 +158,22 @@ avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
 avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
 
 
-%7
-%adicionar intervalo de tempo
-%FIXME: p_transportes(B, M, C, ):- lista_de_entregas(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
+%7 --- done
+p_transportes(B, M, C, Hi, Di, Hf, Df):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L, Hi, Di, Hf, Df).
+>>>>>>> 3cd7b4c5ae707cf162afd6f5c606644756029acc
 
-p_transporte(_, [], 0).
-p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):- 
-	p_transporte(V, T, S1),
-	S is S1 + 1, !.
-p_transporte(V, [_|T], S):- p_transporte(V, T, S).
+p_transporte(L, L, [], _, _, _, _).
+p_transporte(S, L, [registo(ARG1,_,ARG3)|T], Hi, Di, Hf, Df):- 
+	entrega_in_time(Hi, Di, Hf, Df, ARG3),
+	isget_veiculo(V, ARG1),
+	modify_list(V, L, NEWL),
+	p_transporte(S, NEWL, T, Hi, Di, Hf, Df).
+p_transporte(S, L, [_|T], Hi, Di, Hf, Df):-
+	p_transporte(S, L, T, Hi, Di, Hf, Df).
+
+modify_list(bicicleta, [B,M,C], [NEWB,M,C]):- NEWB is B + 1.
+modify_list(moto, [B,M,C], [B,NEWM,C]):- NEWM is M + 1.
+modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 
 
 %8 --- done
