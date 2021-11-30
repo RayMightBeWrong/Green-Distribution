@@ -160,13 +160,17 @@ avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
 
 %7
 %adicionar intervalo de tempo
-p_transportes(B, M, C, ):- lista_de_entregas(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
+p_transportes(B, M, C):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L).
 
-p_transporte(_, [], 0).
-p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):- 
-	p_transporte(V, T, S1),
-	S is S1 + 1, !.
-p_transporte(V, [_|T], S):- p_transporte(V, T, S).
+p_transporte(L, L, []).
+p_transporte(S, L, [registo(ARG1,_,_)|T]):- 
+	isget_veiculo(V, ARG1),
+	modify_list(V, L, NEWL),
+	p_transporte(S, NEWL, T).
+
+modify_list(bicicleta, [B,M,C], [NEWB,M,C]):- NEWB is B + 1.
+modify_list(moto, [B,M,C], [B,NEWM,C]):- NEWM is M + 1.
+modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 
 
 %8 --- done (por verificar)
@@ -181,7 +185,6 @@ entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [_|T], G) :- entregas_tempo(Di/Mi/Ai, Df/Mf/A
 
 
 %9 --- done (por verificar)
-
 enc_entregue_naoentregue(E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
 
 enc_entregue_naoentregue([], 0, 0).
