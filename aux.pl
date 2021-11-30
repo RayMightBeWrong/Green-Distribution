@@ -2,7 +2,15 @@ props_transporte(bicicleta, 5, 10).
 props_transporte(moto, 20, 35).
 props_transporte(carro, 100, 25).
 
-same_estafeta(E, entrega(E,_)).
-same_data_entrega(D/M/A, prazo(_, _, _, D/M/A)).
+%funções chamam-se isget, porque:
+%servem para verificar se o elemento é o mesmo (is) e
+%servem para ir buscar o elemento (get)
 
-get_preco(P, encomenda(_,_,_,P,_)).
+isget_estafeta(E, entrega(E,_)).
+
+isget_cliente(C, encomenda(C,_,_,_,_)). 
+isget_local(L, encomenda(_,L,_,_,_)).
+isget_peso(P, encomenda(_,_,P,_,_)).
+isget_preco(P, encomenda(_,_,_,P,_)).
+
+isget_data_entrega(D/M/A, prazo(_, _, _, D/M/A)).

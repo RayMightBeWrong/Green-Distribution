@@ -21,6 +21,7 @@ g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
 
 
 %1
+%calcular quem mais vezes a bicicleta e se for preciso ver a média do coeficiente green
 mais_ecologico(S):- g(_, L), mais_ecologico(L, [], S).
 
 mais_ecologico([entrega(_,E,_,V,_,_,_)|T], [], S):- 
@@ -64,37 +65,72 @@ select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
 	select_mais_ecologico([E1/B1/M1/C1|T], Best).
 select_mais_ecologico([_|T], Best):- select_mais_ecologico(T, Best).
 
-%2
+
+%2 --- done
 identificar_estafetas([], _, []).
-identificar_estafetas([entrega(_,E,C,_,_,_,_)|T], C, [E|S]):- 
-	estafeta(E), cliente(C),
+identificar_estafetas([registo(ARG1,ARG2,_)|T], C, [E|S]):- 
+	isget_estafeta(E, ARG1), isget_cliente(C, ARG2),
 	identificar_estafetas(T, C, S), not(member(E,S)), !.
 
 identificar_estafetas([_|T], C, S):- identificar_estafetas(T, C, S).
 
-
-%3
-clientes_servidos(E, S):- g(_, L), clientes_servidos(E, L, S).
+%3 --- done
+clientes_servidos(E, S):- lista_de_entregas(L), clientes_servidos(E, L, S).
 
 clientes_servidos(_, [], []).
-clientes_servidos(E, [entrega(_,E,X,_,_,_,_)|T], [X|S]):- 
-	estafeta(E), cliente(X),
+clientes_servidos(E, [registo(ARG1,ARG2,_)|T], [C|S]):- 
+	isget_estafeta(E, ARG1), isget_cliente(C, ARG2),
 	clientes_servidos(E, T, S),
-	not(member(X,S)), !.
+	not(member(C,S)), !.
 clientes_servidos(E, [_|T], S):- clientes_servidos(E, T, S).
 
-
-%4
-valor_faturado(D/M/A, S):- g(L, _), valor_faturado(D/M/A, L, S).
+%4 --- done
+%assumimos que a data de pagamento é a mesma da entrega
+valor_faturado(D/M/A, S):- lista_de_entregas(L), valor_faturado(D/M/A, L, S).
 
 valor_faturado(_, [], 0).
-valor_faturado(D/M/A, [encomenda(_,_,P,D/M/A)|T], S):-
+valor_faturado(D/M/A, [registo(_,ARG2,ARG3)|T], S):-
+	isget_data_entrega(D/M/A, ARG3), isget_preco(P, ARG2),
 	valor_faturado(D/M/A, T, S1),
 	S is S1 + P, !.
 valor_faturado(D/M/A, [_|T], S):- valor_faturado(D/M/A, T, S).
 
 
 %5
+% ir buscar os mais procurados
+mais_pzona(N, S):- lista_de_entregas(L), build_mais_pzona(L, [], R), insert_sort(R, S).
+
+build_mais_pzona([], L, L).
+build_mais_pzona([registo(_,ARG2,_)|T], [], S):-
+	isget_local(X, ARG2), build_mais_pzona(T, [X/1], S).
+build_mais_pzona([registo(_,ARG2,_)|T], L, S):-
+	isget_local(X, ARG2), 
+	local_pertence(X, X/N, L), N1 is N + 1,
+	replace_local(X/N1, L, NEWL),
+        build_mais_pzona(T, NEWL, S).
+build_mais_pzona([registo(_,ARG2,_)|T], L, S):-
+	isget_local(X, ARG2), 
+	not(local_pertence(X, _, L)),
+        append([X/1], L, NEWL),
+        build_mais_pzona(T, NEWL, S).
+
+local_pertence(X, X/SUM, [X/SUM|_]).
+local_pertence(X, R, [Y/_|T]):- X \= Y, local_pertence(X, R, T).
+
+replace_local(L/N, [L/_|T], [L/N|T]).
+replace_local(L1/N1, [L2/N2|T1], [L2/N2|T2]):-
+        L1 \= L2,
+        replace_local(L1/N1, T1, T2).
+
+insert_sort(L, S):- isort(L, [], S).
+isort([], A, A).
+isort([X/N|T], A, S):- insert(X/N, A, NEWA), isort(T, NEWA, S).
+
+insert(X/N1, [Y/N2|T], [Y/N2|NEWT]):- N1 < N2, insert(X/N1, T, NEWT).
+insert(X/N1, [Y/N2|T], [X/N1,Y/N2|T]):- N1 >= N2.
+insert(X/N, [], [X/N]).
+
+%get N elements from list
 
 
 %6
@@ -141,19 +177,11 @@ p_transporte(V, [_|T], S):- p_transporte(V, T, S).
 %9
 
 
-%10
-peso_carregadoOG(E, D/M/A, S):- g(_, L), peso_carregadoOG(E, D/M/A, L, S).
-
-peso_carregadoOG(_, _, [], 0).
-peso_carregadoOG(E, D/M/A, [entrega(_,E,_,_,N,D/M/A,_)|T], S):- 
-	peso_carregadoOG(E,D/M/A,T,S1), S is S1 + N, !.
-peso_carregadoOG(E, D/M/A, [_|T], S):- peso_carregadoOG(E, D/M/A, T, S).
-
-
+%10 --- done
 peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
 
 peso_carregado(_, _, [], 0).
 peso_carregado(E, D/M/A, [registo(ARG1,ARG2,ARG3)|T], S):- 
-	same_estafeta(E, ARG1), same_data_entrega(D/M/A, ARG3), get_preco(P, ARG2),
+	isget_estafeta(E, ARG1), isget_data_entrega(D/M/A, ARG3), isget_peso(P, ARG2),
 	peso_carregado(E,D/M/A,T,S1), S is S1 + P, !.
 peso_carregado(E, D/M/A, [_|T], S):- peso_carregado(E, D/M/A, T, S).
