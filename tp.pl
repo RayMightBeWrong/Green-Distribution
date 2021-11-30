@@ -170,13 +170,20 @@ entregas_tempo(Hi,Di, Hf,Df, [_|T], G) :- entregas_tempo(Hi,Di, Hf,Df, T, G).
 
 %9 --- done
 
-enc_entregue_naoentregue(E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
+enc_entregue_naoentregue(Hi,Di,Hf,Df,E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(Hi,Di,Hf,Df,L,E,N) , !.
 
-enc_entregue_naoentregue([], 0, 0).
-enc_entregue_naoentregue([registo(_,_,ARG3)|T], E, N):- 
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[], 0, 0).
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N):-
 	isget_data_entrega(D, ARG3), D =:= 0,
-	enc_entregue_naoentregue(T, E, G), N is G+1.
-enc_entregue_naoentregue([_|T], E, N) :- enc_entregue_naoentregue(T, G, N), E is G + 1.
+	isget_data_limite(Dl,ARG3),
+	isget_hora_limite(Hl,ARG3),
+	entrega_in_time(Hi,Di,Hf,Df,prazo(_,_,Hl,Dl)),
+	enc_entregue_naoentregue(Hi,Di,Hf,Df,T, E, G), N is G+1.
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N) :- 
+	entrega_in_time(Hi,Di,Hf,Df,ARG3),
+	enc_entregue_naoentregue(Hi,Di,Hf,Df,T, G, N),
+	E is G + 1.
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[_|T], E, N) :- enc_entregue_naoentregue(Hi,Di,Hf,Df,T, E, N).
 
 
 %10 --- done

@@ -16,6 +16,8 @@ isget_peso(P, encomenda(_,_,P,_,_)).
 isget_preco(P, encomenda(_,_,_,P,_)).
 isget_nota(N, encomenda(_,_,_,_,N)).
 
+isget_hora_limite(H/M, prazo(H/M,_,_,_)).
+isget_data_limite(D/M/A, prazo(_,D/M/A,_,_)).
 isget_hora_entrega(0, prazo(_,_, 0,_)).
 isget_hora_entrega(H/M, prazo(_,_, H/M ,_)).
 isget_data_entrega(0, prazo(_, _, _, 0)).
