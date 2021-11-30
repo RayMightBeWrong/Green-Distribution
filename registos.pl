@@ -8,7 +8,7 @@ estafeta(e5).
 %registo(A, B, C)
 
 lista_de_entregas([registo(entrega(e1, transporte(bicicleta, 0)), encomenda(c1, evergrande, 4, 15, 4), prazo(13/55, 18/11/2021, 13/55, 17/11/2021)),
-		   registo(entrega(e1, tranporte(moto, 7)), encomenda(c2, oldale, 6, 25, 4), prazo(15/0, 16/11/2021, 14/2, 16/11/2021)),
+		   registo(entrega(e1, transporte(moto, 7)), encomenda(c2, oldale, 6, 25, 4), prazo(15/0, 16/11/2021, 14/2, 16/11/2021)),
 	   	   registo(entrega(e2, transporte(carro, 6)), encomenda(c1, evergrande, 20, 26, 3), prazo(16/9, 16/11/2021, 16/8, 16/11/2021))]).
 
 %coeficiente green é sempre 0 para bicicletas

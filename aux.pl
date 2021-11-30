@@ -7,6 +7,8 @@ props_transporte(carro, 100, 25).
 %servem para ir buscar o elemento (get)
 
 isget_estafeta(E, entrega(E,_)).
+isget_veiculo(V, entrega(_,transporte(V,_))).
+isget_coef(C, entrega(_,transporte(_,C))).
 
 isget_cliente(C, encomenda(C,_,_,_,_)). 
 isget_local(L, encomenda(_,L,_,_,_)).

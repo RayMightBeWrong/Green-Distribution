@@ -20,49 +20,52 @@ g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
 %...
 
 
-%1
-%calcular quem mais vezes a bicicleta e se for preciso ver a média do coeficiente green
-mais_ecologico(S):- g(_, L), mais_ecologico(L, [], S).
+%1 --- done
+%calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
+mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], [], S):- 
-	add_veiculo_tuple(E/0/0/0, V, R), !, 
+mais_ecologico([registo(ARG1,_,_)|T], [], S):- 
+	isget_veiculo(V, ARG1), isget_coef(COEF, ARG1), isget_estafeta(E, ARG1),
+	add_veiculo_tuple(E/0/0/0, V/COEF, R), !, 
 	mais_ecologico(T, [R], S).
 mais_ecologico([], LE, S):- select_mais_ecologico(LE, S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):- 
+mais_ecologico([registo(ARG1,_,_)|T], LE, S):- 
+	isget_estafeta(E, ARG1), isget_coef(COEF, ARG1), isget_veiculo(V, ARG1), 
 	estafeta_pertence(E, R1, LE), 
-	add_veiculo_tuple(R1, V, R2),
+	add_veiculo_tuple(R1, V/COEF, R2),
 	replace_estafeta(R2, LE, NEWLE),
 	mais_ecologico(T, NEWLE, S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):- 
+mais_ecologico([registo(ARG1,_,_)|T], LE, S):- 
+	isget_veiculo(V, ARG1), isget_coef(COEF, ARG1), isget_estafeta(E, ARG1),
 	not(estafeta_pertence(E, _, LE)), 
-	add_veiculo_tuple(E/0/0/0, V, R),
+	add_veiculo_tuple(E/0/0/0, V/COEF, R),
 	append([R], LE, NEWLE),
 	mais_ecologico(T, NEWLE, S).
 
-estafeta_pertence(E, E/B/M/C, [E/B/M/C|_]).
+estafeta_pertence(E, E/B/C/N, [E/B/C/N|_]).
 estafeta_pertence(E, R, [Y/_/_/_|L]):- E \= Y, estafeta_pertence(E, R, L).
 
-replace_estafeta(E/B/M/C, [E/_/_/_|L], [E/B/M/C|L]). 
-replace_estafeta(E/B1/M1/C1, [Y/B2/M2/C2|L1], [Y/B2/M2/C2|L2]):- 
+replace_estafeta(E/B/C/N, [E/_/_/_|L], [E/B/C/N|L]). 
+replace_estafeta(E/B1/C1/N1, [Y/B2/C2/N2|L1], [Y/B2/C2/N2|L2]):- 
 	E \= Y, 
-	replace_estafeta(E/B1/M1/C1, L1, L2).
+	replace_estafeta(E/B1/C1/N1, L1, L2).
 
+add_veiculo_tuple(E/B/C/N, bicicleta/_, E/NEWB/C/NEWN):- NEWB is B + 1, NEWN is N + 1.
+add_veiculo_tuple(E/B/C/N, moto/COEF, E/B/NEWC/NEWN):- NEWC is C + COEF, NEWN is N + 1.
+add_veiculo_tuple(E/B/C/N, carro/COEF, E/B/NEWC/NEWN):- NEWC is C + COEF, NEWN is N + 1.
 
-add_veiculo_tuple(E/B/M/C, bicicleta, E/NEWB/M/C):- NEWB is B + 1.
-add_veiculo_tuple(E/B/M/C, moto, E/B/NEWM/C):- NEWM is M + 1.
-add_veiculo_tuple(E/B/M/C, carro, E/B/M/NEWC):- NEWC is C + 1.
-
-%select_mais_ecologico por fazer obviamente
 select_mais_ecologico([E/_/_/_], E):- !.
-select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
+select_mais_ecologico([E1/B1/C1/N1, _/B2/_/_|T], Best):-
 	B1 > B2, !,
-	select_mais_ecologico([E1/B1/M1/C1|T], Best).
-select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
-	B1 == B2,
-	write("i'm here"),
-	select_mais_ecologico([E1/B1/M1/C1|T], Best).
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
+select_mais_ecologico([E1/B1/C1/N1, _/B2/C2/N2|T], Best):-
+	B1 =:= B2, C1 / N1 < C2 / N2, !,
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
+select_mais_ecologico([E1/B1/C1/N1, _/B2/C2/N2|T], Best):-
+	B1 =:= B2, C1 / N1 =:= C2 / N2, N1 >= N2, !,
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
 select_mais_ecologico([_|T], Best):- select_mais_ecologico(T, Best).
 
 
@@ -157,13 +160,7 @@ avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
 
 %7
 %adicionar intervalo de tempo
-%!
-%!
-%!
-%!
-%!
-
-p_transportes(B, M, C):- g(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
+p_transportes(B, M, C, ):- lista_de_entregas(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
 
 p_transporte(_, [], 0).
 p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):- 
@@ -172,20 +169,27 @@ p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):-
 p_transporte(V, [_|T], S):- p_transporte(V, T, S).
 
 
-%8 -- Done (por verificar)
+%8 --- done (por verificar)
+entregas_tempo(Di, Df, N):- lista_de_entregas(L), entregas_tempo(Di, Df, L, N), !.
 
-entregas_tempo(Di,Df,N) :-  lista_de_entregas(L) , entregas_tempo(Di,Df,L,N), !.
-entregas_tempo(Di,Df,[],0).
-entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- isget_data_entrega(D/M/A,P) , A =< Af , A >= Ai , M =< Mf , M >= Mi , D =< Df , D >= Di ,
-							entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,N) , G is N+1.
-entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,G).
+entregas_tempo(_, _, [], 0).
+entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [registo(_,_,ARG3)|T], G):- 
+	isget_data_entrega(D/M/A, ARG3),
+	A =< Af, A >= Ai, M =< Mf, M >= Mi, D =< Df, D >= Di,
+	entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, N), G is N + 1.
+entregas_tempo(Di/Mi/Ai, Df/Mf/Af, [_|T], G) :- entregas_tempo(Di/Mi/Ai, Df/Mf/Af, T, G).
 
-%9 -- Done (por verificar)
 
-enc_entregue_naoentregue(E,N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
-enc_entregue_naoentregue([],0,0).
-enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- isget_data_entrega(D,P) , D =:= 0 , enc_entregue_naoentregue(T,E,G),N is G+1.
-enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- enc_entregue_naoentregue(T,G,N) , E is G+1.
+%9 --- done (por verificar)
+
+enc_entregue_naoentregue(E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
+
+enc_entregue_naoentregue([], 0, 0).
+enc_entregue_naoentregue([registo(_,_,ARG3)|T], E, N):- 
+	isget_data_entrega(D, ARG3), D =:= 0,
+	enc_entregue_naoentregue(T, E, G), N is G+1.
+enc_entregue_naoentregue([_|T], E, N) :- enc_entregue_naoentregue(T, G, N), E is G + 1.
+
 
 %10 --- done
 peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
