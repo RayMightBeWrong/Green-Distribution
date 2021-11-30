@@ -67,6 +67,7 @@ valor_faturado(D/M/A, [_|T], S):- valor_faturado(D/M/A, T, S).
 
 avaliacao_estafeta(List,E,Result) :- avaliacao_estafeta(List,E,0,0,Result).
 
+
 avaliacao_estafeta([],_,R,C,Result) :- Result is div(R,C).
 avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
 			R1 is Cls + R,
