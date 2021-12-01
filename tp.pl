@@ -20,6 +20,7 @@ media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):-
 	isget_cliente(C,ARG2),
 	media_satisfacao(C,Total,Soma,R),
 	isget_nota(Class,ARG2),
+	Class >= 0,
 	T is Total+1,
 	S is Soma+Class.
 media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
