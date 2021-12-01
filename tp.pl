@@ -2,67 +2,73 @@
 :- include('registos.pl').
 :- include('aux.pl').
 
-%encomenda(nr, cliente, preço, prazo)
-%entrega(nr, estafeta, cliente, meio_de_transporte, volume, data_de_entrega, classificação)
 
 %adicionar estimativa de tempo ao mapa?
 %dizer o tempo máximo de entrega fica como prazo de entrega
-%estado_entregue_ou_não
 %penalização_por_não_cumprir_entregas
-g([encomenda(1, c1, 15, 18/11/2021), encomenda(2, c1, 25, 16/11/2021), encomenda(3, c2, 26, 18/11/2021)], [entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1), entrega(2, e1, c1, moto, 6, 16/11/2021,2), entrega(3, e2, c2, bicicleta, 7, 18/11/2021,4), entrega(3, e2, c2, moto, 7, 18/11/2021,4)]).
-
-g1([entrega(1, e1, c1, bicicleta, 4, 18/11/2021,1),
-	entrega(2, e2, c1, moto, 6, 16/11/2021,2), 
-	entrega(3, e1, c2, moto, 7, 18/11/2021,4)]).
 
 %extras:
 %quando gastou um cliente na GreenDistribution
-%...
+%calcular a média de satisfação de um cliente
 
+%Média de satisfação de um cliente
 
-%1
-%calcular quem mais vezes a bicicleta e se for preciso ver a média do coeficiente green
-mais_ecologico(S):- g(_, L), mais_ecologico(L, [], S).
+media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
+media_satisfacao(_,0).
+media_satisfacao(_,0,0,[]).
+media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):- 
+	isget_cliente(C,ARG2),
+	media_satisfacao(C,Total,Soma,R),
+	isget_nota(Class,ARG2),
+	T is Total+1,
+	S is Soma+Class.
+media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
+%1 --- done
+%calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
+mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], [], S):- 
-	add_veiculo_tuple(E/0/0/0, V, R), !, 
+mais_ecologico([registo(ARG1,_,_)|T], [], S):- 
+	isget_veiculo(V, ARG1), isget_coef(COEF, ARG1), isget_estafeta(E, ARG1),
+	add_veiculo_tuple(E/0/0/0, V/COEF, R), !, 
 	mais_ecologico(T, [R], S).
 mais_ecologico([], LE, S):- select_mais_ecologico(LE, S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):- 
+mais_ecologico([registo(ARG1,_,_)|T], LE, S):- 
+	isget_estafeta(E, ARG1), isget_coef(COEF, ARG1), isget_veiculo(V, ARG1), 
 	estafeta_pertence(E, R1, LE), 
-	add_veiculo_tuple(R1, V, R2),
+	add_veiculo_tuple(R1, V/COEF, R2),
 	replace_estafeta(R2, LE, NEWLE),
 	mais_ecologico(T, NEWLE, S).
 
-mais_ecologico([entrega(_,E,_,V,_,_,_)|T], LE, S):- 
+mais_ecologico([registo(ARG1,_,_)|T], LE, S):- 
+	isget_veiculo(V, ARG1), isget_coef(COEF, ARG1), isget_estafeta(E, ARG1),
 	not(estafeta_pertence(E, _, LE)), 
-	add_veiculo_tuple(E/0/0/0, V, R),
+	add_veiculo_tuple(E/0/0/0, V/COEF, R),
 	append([R], LE, NEWLE),
 	mais_ecologico(T, NEWLE, S).
 
-estafeta_pertence(E, E/B/M/C, [E/B/M/C|_]).
+estafeta_pertence(E, E/B/C/N, [E/B/C/N|_]).
 estafeta_pertence(E, R, [Y/_/_/_|L]):- E \= Y, estafeta_pertence(E, R, L).
 
-replace_estafeta(E/B/M/C, [E/_/_/_|L], [E/B/M/C|L]). 
-replace_estafeta(E/B1/M1/C1, [Y/B2/M2/C2|L1], [Y/B2/M2/C2|L2]):- 
+replace_estafeta(E/B/C/N, [E/_/_/_|L], [E/B/C/N|L]). 
+replace_estafeta(E/B1/C1/N1, [Y/B2/C2/N2|L1], [Y/B2/C2/N2|L2]):- 
 	E \= Y, 
-	replace_estafeta(E/B1/M1/C1, L1, L2).
+	replace_estafeta(E/B1/C1/N1, L1, L2).
 
+add_veiculo_tuple(E/B/C/N, bicicleta/_, E/NEWB/C/NEWN):- NEWB is B + 1, NEWN is N + 1.
+add_veiculo_tuple(E/B/C/N, moto/COEF, E/B/NEWC/NEWN):- NEWC is C + COEF, NEWN is N + 1.
+add_veiculo_tuple(E/B/C/N, carro/COEF, E/B/NEWC/NEWN):- NEWC is C + COEF, NEWN is N + 1.
 
-add_veiculo_tuple(E/B/M/C, bicicleta, E/NEWB/M/C):- NEWB is B + 1.
-add_veiculo_tuple(E/B/M/C, moto, E/B/NEWM/C):- NEWM is M + 1.
-add_veiculo_tuple(E/B/M/C, carro, E/B/M/NEWC):- NEWC is C + 1.
-
-%select_mais_ecologico por fazer obviamente
 select_mais_ecologico([E/_/_/_], E):- !.
-select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
+select_mais_ecologico([E1/B1/C1/N1, _/B2/_/_|T], Best):-
 	B1 > B2, !,
-	select_mais_ecologico([E1/B1/M1/C1|T], Best).
-select_mais_ecologico([E1/B1/M1/C1, _/B2/_/_|T], Best):-
-	B1 == B2,
-	write("i'm here"),
-	select_mais_ecologico([E1/B1/M1/C1|T], Best).
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
+select_mais_ecologico([E1/B1/C1/N1, _/B2/C2/N2|T], Best):-
+	B1 =:= B2, C1 / N1 < C2 / N2, !,
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
+select_mais_ecologico([E1/B1/C1/N1, _/B2/C2/N2|T], Best):-
+	B1 =:= B2, C1 / N1 =:= C2 / N2, N1 >= N2, !,
+	select_mais_ecologico([E1/B1/C1/N1|T], Best).
 select_mais_ecologico([_|T], Best):- select_mais_ecologico(T, Best).
 
 
@@ -134,19 +140,19 @@ get_Nelements(_, [], []).
 get_Nelements(N, [X/_|T1], [X|T2]):- NEWN is N - 1, get_Nelements(NEWN, T1, T2).
 
 
-%6
-%-- calcular a classificação média de satisfação de cliente para um determinado estafeta;
-%-- avaliacao_estafeta(Lista de entregas,cliente,estafeta avaliar,Resultado acumulado)
+%6 --- done
+avaliacao_estafeta(E, S):- lista_de_entregas(L), avaliacao_estafeta(L, E, 0, 0, S).
 
-%falta caso nulo
-%!
-%!
-%!
-%!
-%!
+avaliacao_estafeta([], _, 0, 0, 0).
+avaliacao_estafeta([], _, R, N, S):- S is R / N.
+avaliacao_estafeta([registo(ARG1,ARG2,_)|T], E, R, N, S) :-
+	isget_estafeta(E, ARG1), isget_nota(C, ARG2),
+	NEWR is C + R, NEWN is N + 1, !,
+	avaliacao_estafeta(T, E, NEWR, NEWN, S).
+avaliacao_estafeta([_|T], E, R, N, S):- avaliacao_estafeta(T, E, R, N, S).
 
-avaliacao_estafeta(List,E,Result) :- avaliacao_estafeta(List,E,0,0,Result).
 
+<<<<<<< HEAD
 
 avaliacao_estafeta([],_,R,C,Result) :- Result is div(R,C).
 avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
@@ -154,39 +160,52 @@ avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
 			C1 is C + 1,
 			avaliacao_estafeta(T,E,R1,C1,Res).
 avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
+=======
+%7 --- done
+p_transportes(B, M, C, Hi, Di, Hf, Df):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L, Hi, Di, Hf, Df).
+>>>>>>> b25a4de93189d199b5b82403bec8f3cb57b88960
+
+p_transporte(L, L, [], _, _, _, _).
+p_transporte(S, L, [registo(ARG1,_,ARG3)|T], Hi, Di, Hf, Df):- 
+	entrega_in_time(Hi, Di, Hf, Df, ARG3),
+	isget_veiculo(V, ARG1),
+	modify_list(V, L, NEWL),
+	p_transporte(S, NEWL, T, Hi, Di, Hf, Df).
+p_transporte(S, L, [_|T], Hi, Di, Hf, Df):-
+	p_transporte(S, L, T, Hi, Di, Hf, Df).
+
+modify_list(bicicleta, [B,M,C], [NEWB,M,C]):- NEWB is B + 1.
+modify_list(moto, [B,M,C], [B,NEWM,C]):- NEWM is M + 1.
+modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 
 
-%7
-%adicionar intervalo de tempo
-%!
-%!
-%!
-%!
-%!
-
-p_transportes(B, M, C):- g(L), p_transporte(bicicleta, L, B), p_transporte(moto, L, M), p_transporte(carro, L, C). 
-
-p_transporte(_, [], 0).
-p_transporte(V, [entrega(_,_,_,V,_,_,_)|T], S):- 
-	p_transporte(V, T, S1),
-	S is S1 + 1, !.
-p_transporte(V, [_|T], S):- p_transporte(V, T, S).
+%8 --- done
+entregas_tempo(Hi,Di,Hf, Df, N):- lista_de_entregas(L), entregas_tempo(Hi,Di,Hf, Df, L, N), !.
+entregas_tempo(_,_,_, _, [], 0).
+entregas_tempo(Hi,Di, Hf,Df, [registo(_,_,ARG3)|T], G):- 
+	entrega_in_time(Hi, Di, Hf, Df, ARG3),
+	entregas_tempo(Hi,Di, Hf,Df, T, N),
+	G is N + 1.
+entregas_tempo(Hi,Di, Hf,Df, [_|T], G) :- entregas_tempo(Hi,Di, Hf,Df, T, G).
 
 
-%8 -- Done (por verificar)
+%9 --- done
 
-entregas_tempo(Di,Df,N) :-  lista_de_entregas(L) , entregas_tempo(Di,Df,L,N), !.
-entregas_tempo(Di,Df,[],0).
-entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- isget_data_entrega(D/M/A,P) , A =< Af , A >= Ai , M =< Mf , M >= Mi , D =< Df , D >= Di ,
-							entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,N) , G is N+1.
-entregas_tempo(Di/Mi/Ai,Df/Mf/Af,[registo(_,_,P)|T],G) :- entregas_tempo(Di/Mi/Ai,Df/Mf/Af,T,G).
+enc_entregue_naoentregue(Hi,Di,Hf,Df,E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(Hi,Di,Hf,Df,L,E,N) , !.
 
-%9 -- Done (por verificar)
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[], 0, 0).
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N):-
+	isget_data_entrega(D, ARG3), D =:= 0,
+	isget_data_limite(Dl,ARG3),
+	isget_hora_limite(Hl,ARG3),
+	entrega_in_time(Hi,Di,Hf,Df,prazo(_,_,Hl,Dl)),
+	enc_entregue_naoentregue(Hi,Di,Hf,Df,T, E, G), N is G+1.
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N) :- 
+	entrega_in_time(Hi,Di,Hf,Df,ARG3),
+	enc_entregue_naoentregue(Hi,Di,Hf,Df,T, G, N),
+	E is G + 1.
+enc_entregue_naoentregue(Hi,Di,Hf,Df,[_|T], E, N) :- enc_entregue_naoentregue(Hi,Di,Hf,Df,T, E, N).
 
-enc_entregue_naoentregue(E,N) :- lista_de_entregas(L) , enc_entregue_naoentregue(L,E,N) , !.
-enc_entregue_naoentregue([],0,0).
-enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- isget_data_entrega(D,P) , D =:= 0 , enc_entregue_naoentregue(T,E,G),N is G+1.
-enc_entregue_naoentregue([registo(_,_,P)|T],E,N) :- enc_entregue_naoentregue(T,G,N) , E is G+1.
 
 %10 --- done
 peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
