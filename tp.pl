@@ -11,6 +11,18 @@
 %quando gastou um cliente na GreenDistribution
 %calcular a média de satisfação de um cliente
 
+% Total de gastos de um cliente
+custo_total(C,T) :- lista_de_entregas(L), custo_total(L,C,T).
+custo_total([],_,0).
+custo_total([registo(_,ARG2,_)| T],C,Total) :- 
+	isget_cliente(C,ARG2),
+	custo_total(T,C,Acc),
+	isget_preco(P,ARG2),
+	Total is Acc + P.
+custo_total([_|T],C,Total) :- custo_total(T,C,Total).
+
+
+
 %Média de satisfação de um cliente
 
 media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
@@ -152,18 +164,8 @@ avaliacao_estafeta([registo(ARG1,ARG2,_)|T], E, R, N, S) :-
 avaliacao_estafeta([_|T], E, R, N, S):- avaliacao_estafeta(T, E, R, N, S).
 
 
-<<<<<<< HEAD
-
-avaliacao_estafeta([],_,R,C,Result) :- Result is div(R,C).
-avaliacao_estafeta([(entrega(_,E,_,_,_,_,Cls))|T],E,R,C,Res) :-
-			R1 is Cls + R,
-			C1 is C + 1,
-			avaliacao_estafeta(T,E,R1,C1,Res).
-avaliacao_estafeta([_|T],E,R,Cs,Res) :- avaliacao_estafeta(T,E,R,Cs,Res).
-=======
 %7 --- done
 p_transportes(B, M, C, Hi, Di, Hf, Df):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L, Hi, Di, Hf, Df).
->>>>>>> b25a4de93189d199b5b82403bec8f3cb57b88960
 
 p_transporte(L, L, [], _, _, _, _).
 p_transporte(S, L, [registo(ARG1,_,ARG3)|T], Hi, Di, Hf, Df):- 
