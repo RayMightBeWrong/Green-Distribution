@@ -5,9 +5,8 @@
 
 %adicionar estimativa de tempo ao mapa?
 %dizer o tempo máximo de entrega fica como prazo de entrega
-%penalização_por_não_cumprir_entregas
 
-%1 --- done
+%1
 %calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
 mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
 
@@ -56,7 +55,7 @@ select_mais_ecologico([E1/B1/C1/N1, _/B2/C2/N2|T], Best):-
 select_mais_ecologico([_|T], Best):- select_mais_ecologico(T, Best).
 
 
-%2 --- done
+%2
 identificar_estafetas([], _, []).
 identificar_estafetas([registo(ARG1,ARG2,_)|T], C, [E|S]):- 
 	isget_estafeta(E, ARG1), isget_cliente(C, ARG2),
@@ -64,7 +63,7 @@ identificar_estafetas([registo(ARG1,ARG2,_)|T], C, [E|S]):-
 
 identificar_estafetas([_|T], C, S):- identificar_estafetas(T, C, S).
 
-%3 --- done
+%3
 clientes_servidos(E, S):- lista_de_entregas(L), clientes_servidos(E, L, S).
 
 clientes_servidos(_, [], []).
@@ -74,7 +73,7 @@ clientes_servidos(E, [registo(ARG1,ARG2,_)|T], [C|S]):-
 	not(member(C,S)), !.
 clientes_servidos(E, [_|T], S):- clientes_servidos(E, T, S).
 
-%4 --- done
+%4
 %assumimos que a data de pagamento é a mesma da entrega
 valor_faturado(D/M/A, S):- lista_de_entregas(L), valor_faturado(D/M/A, L, S).
 
@@ -86,7 +85,7 @@ valor_faturado(D/M/A, [registo(_,ARG2,ARG3)|T], S):-
 valor_faturado(D/M/A, [_|T], S):- valor_faturado(D/M/A, T, S).
 
 
-%5 --- done
+%5
 mais_pzona(N, S):- lista_de_entregas(L), build_mais_pzona(L, [], R1), insert_sort(R1, R2), get_Nelements(N, R2, S).
 
 build_mais_pzona([], L, L).
@@ -124,7 +123,7 @@ get_Nelements(_, [], []).
 get_Nelements(N, [X/_|T1], [X|T2]):- NEWN is N - 1, get_Nelements(NEWN, T1, T2).
 
 
-%6 --- done
+%6
 avaliacao_estafeta(E, S):- lista_de_entregas(L), avaliacao_estafeta(L, E, 0, 0, S).
 
 avaliacao_estafeta([], _, 0, 0, 0).
@@ -136,7 +135,7 @@ avaliacao_estafeta([registo(ARG1,ARG2,_)|T], E, R, N, S) :-
 avaliacao_estafeta([_|T], E, R, N, S):- avaliacao_estafeta(T, E, R, N, S).
 
 
-%7 --- done
+%7
 p_transportes(B, M, C, Hi, Di, Hf, Df):- lista_de_entregas(L), p_transporte([B,M,C], [0,0,0], L, Hi, Di, Hf, Df).
 
 p_transporte(L, L, [], _, _, _, _).
@@ -153,7 +152,7 @@ modify_list(moto, [B,M,C], [B,NEWM,C]):- NEWM is M + 1.
 modify_list(carro, [B,M,C], [B,M,NEWC]):- NEWC is C + 1.
 
 
-%8 --- done
+%8
 entregas_tempo(Hi,Di,Hf, Df, N):- lista_de_entregas(L), entregas_tempo(Hi,Di,Hf, Df, L, N), !.
 entregas_tempo(_,_,_, _, [], 0).
 entregas_tempo(Hi,Di, Hf,Df, [registo(_,_,ARG3)|T], G):- 
@@ -163,11 +162,10 @@ entregas_tempo(Hi,Di, Hf,Df, [registo(_,_,ARG3)|T], G):-
 entregas_tempo(Hi,Di, Hf,Df, [_|T], G) :- entregas_tempo(Hi,Di, Hf,Df, T, G).
 
 
-%9 --- done
-
+%9
 enc_entregue_naoentregue(Hi,Di,Hf,Df,E, N) :- lista_de_entregas(L) , enc_entregue_naoentregue(Hi,Di,Hf,Df,L,E,N) , !.
 
-enc_entregue_naoentregue(Hi,Di,Hf,Df,[], 0, 0).
+enc_entregue_naoentregue(_,_,_,_,[], 0, 0).
 enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N):-
 	isget_data_entrega(D, ARG3), D =:= 0,
 	isget_data_limite(Dl,ARG3),
@@ -181,7 +179,7 @@ enc_entregue_naoentregue(Hi,Di,Hf,Df,[registo(_,_,ARG3)|T], E, N) :-
 enc_entregue_naoentregue(Hi,Di,Hf,Df,[_|T], E, N) :- enc_entregue_naoentregue(Hi,Di,Hf,Df,T, E, N).
 
 
-%10 --- done
+%10
 peso_carregado(E, D/M/A, S):- lista_de_entregas(L), peso_carregado(E, D/M/A, L, S).
 
 peso_carregado(_, _, [], 0).
@@ -192,8 +190,6 @@ peso_carregado(E, D/M/A, [_|T], S):- peso_carregado(E, D/M/A, T, S).
 
 
 %extras:
-%quando gastou um cliente na GreenDistribution
-%calcular a média de satisfação de um cliente
 
 % Total de gastos de um cliente
 custo_total(C,T) :- lista_de_entregas(L), custo_total(L,C,T).
@@ -208,7 +204,6 @@ custo_total([_|T],C,Total) :- custo_total(T,C,Total).
 
 
 %Média de satisfação de um cliente
-
 media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
 media_satisfacao(_,0).
 media_satisfacao(_,0,0,[]).
