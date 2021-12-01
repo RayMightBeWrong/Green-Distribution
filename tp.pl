@@ -11,7 +11,18 @@
 %quando gastou um cliente na GreenDistribution
 %calcular a média de satisfação de um cliente
 
+%Média de satisfação de um cliente
 
+media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
+media_satisfacao(_,0).
+media_satisfacao(_,0,0,[]).
+media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):- 
+	isget_cliente(C,ARG2),
+	media_satisfacao(C,Total,Soma,R),
+	isget_nota(Class,ARG2),
+	T is Total+1,
+	S is Soma+Class.
+media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
 %1 --- done
 %calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
 mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
