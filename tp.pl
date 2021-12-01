@@ -7,35 +7,6 @@
 %dizer o tempo máximo de entrega fica como prazo de entrega
 %penalização_por_não_cumprir_entregas
 
-%extras:
-%quando gastou um cliente na GreenDistribution
-%calcular a média de satisfação de um cliente
-
-% Total de gastos de um cliente
-custo_total(C,T) :- lista_de_entregas(L), custo_total(L,C,T).
-custo_total([],_,0).
-custo_total([registo(_,ARG2,_)| T],C,Total) :- 
-	isget_cliente(C,ARG2),
-	custo_total(T,C,Acc),
-	isget_preco(P,ARG2),
-	Total is Acc + P.
-custo_total([_|T],C,Total) :- custo_total(T,C,Total).
-
-
-
-%Média de satisfação de um cliente
-
-media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
-media_satisfacao(_,0).
-media_satisfacao(_,0,0,[]).
-media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):- 
-	isget_cliente(C,ARG2),
-	media_satisfacao(C,Total,Soma,R),
-	isget_nota(Class,ARG2),
-	Class >= 0,
-	T is Total+1,
-	S is Soma+Class.
-media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
 %1 --- done
 %calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
 mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
@@ -218,3 +189,34 @@ peso_carregado(E, D/M/A, [registo(ARG1,ARG2,ARG3)|T], S):-
 	isget_estafeta(E, ARG1), isget_data_entrega(D/M/A, ARG3), isget_peso(P, ARG2),
 	peso_carregado(E,D/M/A,T,S1), S is S1 + P, !.
 peso_carregado(E, D/M/A, [_|T], S):- peso_carregado(E, D/M/A, T, S).
+
+
+%extras:
+%quando gastou um cliente na GreenDistribution
+%calcular a média de satisfação de um cliente
+
+% Total de gastos de um cliente
+custo_total(C,T) :- lista_de_entregas(L), custo_total(L,C,T).
+custo_total([],_,0).
+custo_total([registo(_,ARG2,_)| T],C,Total) :- 
+	isget_cliente(C,ARG2),
+	custo_total(T,C,Acc),
+	isget_preco(P,ARG2),
+	Total is Acc + P.
+custo_total([_|T],C,Total) :- custo_total(T,C,Total).
+
+
+
+%Média de satisfação de um cliente
+
+media_satisfacao(C,S) :- lista_de_entregas(L) , media_satisfacao(C,Total,Soma,L), Total > 0, S is Soma / Total,!.
+media_satisfacao(_,0).
+media_satisfacao(_,0,0,[]).
+media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):- 
+	isget_cliente(C,ARG2),
+	media_satisfacao(C,Total,Soma,R),
+	isget_nota(Class,ARG2),
+	Class >= 0,
+	T is Total+1,
+	S is Soma+Class.
+media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
