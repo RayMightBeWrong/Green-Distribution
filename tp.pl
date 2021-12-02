@@ -3,9 +3,6 @@
 :- include('aux.pl').
 
 
-%adicionar estimativa de tempo ao mapa?
-%dizer o tempo máximo de entrega fica como prazo de entrega
-
 %1
 %calcular quem mais vezes a bicicleta, a média do coeficiente green é o fator de desempate
 mais_ecologico(S):- lista_de_entregas(L), mais_ecologico(L, [], S).
@@ -190,8 +187,7 @@ peso_carregado(E, D/M/A, [_|T], S):- peso_carregado(E, D/M/A, T, S).
 
 
 %extras:
-
-% Total de gastos de um cliente
+%Total de gastos de um cliente
 custo_total(C,T) :- lista_de_entregas(L), custo_total(L,C,T).
 custo_total([],_,0).
 custo_total([registo(_,ARG2,_)| T],C,Total) :- 
@@ -200,7 +196,6 @@ custo_total([registo(_,ARG2,_)| T],C,Total) :-
 	isget_preco(P,ARG2),
 	Total is Acc + P.
 custo_total([_|T],C,Total) :- custo_total(T,C,Total).
-
 
 
 %Média de satisfação de um cliente
@@ -215,3 +210,25 @@ media_satisfacao(C,T,S,[registo(_,ARG2,_)|R]):-
 	T is Total+1,
 	S is Soma+Class.
 media_satisfacao(C,T,S,[_|R]) :- media_satisfacao(C,T,S,R).
+
+%Valor faturado relativo a um estafeta
+vf_estafeta(E, S):- lista_de_entregas(L), vf_estafeta(E, L, S).
+
+vf_estafeta(_, [], 0).
+vf_estafeta(E, [registo(ARG1,ARG2,ARG3)|T], S):-
+	isget_estafeta(E, ARG1), isget_preco(P, ARG2), not(isget_data_entrega(0, ARG3)),
+	vf_estafeta(E, T, S2), !,
+	S is S2 + P.
+vf_estafeta(E, [_|T], S):- vf_estafeta(E, T, S).
+
+%Quantos entregas feitas depois do prazo (por estafeta) 
+fora_de_tempo(E, S):- lista_de_entregas(L), fora_de_tempo(E, L, S).
+
+fora_de_tempo(_, [], 0).
+fora_de_tempo(E, [registo(ARG1,_,ARG3)|T], S):-
+	isget_estafeta(E, ARG1), 
+	isget_hora_limite(HL, ARG3), isget_data_limite(DL, ARG3), isget_hora_entrega(HE, ARG3), isget_data_entrega(DE, ARG3),
+	is_older_than(HL, DL, HE, DE),
+	fora_de_tempo(E, T, S2), !,
+	S is S2 + 1.
+fora_de_tempo(E, [_|T], S):- fora_de_tempo(E, T, S).
