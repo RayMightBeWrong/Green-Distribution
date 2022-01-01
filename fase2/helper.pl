@@ -36,3 +36,6 @@ is_older_than(H1/_, D1/M1/A1, H2/_, D2/M2/A2):-
 	A1 =:= A2, M1 =:= M2, D1 =:= D2, H1 < H2, !. 
 is_older_than(H1/MIN1, D1/M1/A1, H2/MIN2, D2/M2/A2):- 
 	A1 =:= A2, M1 =:= M2, D1 =:= D2, H1 =:= H2, MIN1 =< MIN2, !. 
+
+createListAresta([_], []).
+createListAresta([A,B|T1], [aresta(A, B, D, C)|T2]):- adjacente(A, B, D, C), createListAresta([B|T1], T2).
