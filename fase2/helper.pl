@@ -1,7 +1,3 @@
-props_transporte(bicicleta, 5, 10).
-props_transporte(moto, 20, 35).
-props_transporte(carro, 100, 25).
-
 %funções chamam-se isget, porque:
 %servem para verificar se o elemento é o mesmo (is) e
 %servem para ir buscar o elemento (get)
