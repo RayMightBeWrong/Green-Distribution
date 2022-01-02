@@ -37,5 +37,9 @@ is_older_than(H1/_, D1/M1/A1, H2/_, D2/M2/A2):-
 is_older_than(H1/MIN1, D1/M1/A1, H2/MIN2, D2/M2/A2):- 
 	A1 =:= A2, M1 =:= M2, D1 =:= D2, H1 =:= H2, MIN1 =< MIN2, !. 
 
-createListAresta([_], []).
-createListAresta([A,B|T1], [aresta(A, B, D, C)|T2]):- adjacente(A, B, D, C), createListAresta([B|T1], T2).
+
+createListAresta([_], [], 0, 0).
+createListAresta([A,B|T1], [aresta(A, B, D2, C2)|T2], NewD, NewC):- 
+		createListAresta([B|T1], T2, D, C),
+		adjacente(A, B, D2, C2),
+		NewD is D + D2, NewC is (1/C2 * D2) + C.

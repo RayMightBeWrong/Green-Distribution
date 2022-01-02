@@ -14,11 +14,11 @@ circuitoDFS(A, B, T, P, circuito(A, B, T, P, S)):- circuitoDFS(A, [B], S).
 
 circuitoDFS(A, [A|T], [A|T]).
 circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
-				write("Atual: "), write(B), write('\n'),
-				write("Próximo: "), write(X), write('\n'),
-				write("Estado: "), write([B|T]), write('\n'),
-				write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'),
-				circuitoDFS(A, [X,B|T], S).
+			%write("Atual: "), write(B), write('\n'),
+			%write("Próximo: "), write(X), write('\n'),
+			%write("Estado: "), write([B|T]), write('\n'),
+			%write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'),
+			circuitoDFS(A, [X,B|T], S).
 			
 % breadth first search 
 circuitoBFS(A, B, T, P, circuito(A, B, T, P, S)):- circuitoBFS(B, [[A]], S).
@@ -30,78 +30,97 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 	findall([X|EstadosA],
 		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
 	append(Outros, Novos, Todos),
-	write("Nodo atual: "), write(Atual), write("\n"),
-	write("EstadosA: "), write(EstadosA), write("\n"),
-	write("Novos: "), write(Novos), write("\n"),
-	write("Outros: "), write(Outros), write("\n"),
-	write("estado: "), write(Todos), write("\n"), write("\n"),
+	%write("Nodo atual: "), write(Atual), write("\n"),
+	%write("EstadosA: "), write(EstadosA), write("\n"),
+	%write("Novos: "), write(Novos), write("\n"),
+	%write("Outros: "), write(Outros), write("\n"),
+	%write("estado: "), write(Todos), write("\n"), write("\n"),
 	circuitoBFS(F, Todos, S).
 
 
 % iterative deepening search
-% mudar T
-%circuitoIDS(A, B, T, P, circuito(A, B, T, P, S)):- circuitoIDS(A, [B], T, S).
-
-%circuitoIDS(A, [A|T], _, [A|T]).
-%circuitoIDS(_, _, 0, []).
-%circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T])),		
-%			NewN is N - 1, NewN >= 0, 
-%			write("NewN: "), write(NewN), write('\n'), 
-%			write("Atual: "), write(B), write('\n'), 
-%			write("Estado: "), write([B|T]), write('\n'), 
-%			write("Próximo: "), write(X), write('\n'), 
-%			write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'), 
-%			circuitoIDS(A, [X,B|T], NewN, S).
-
-rmFromList(_, [], []).
-rmFromList(A, [A|T1], T2):- rmFromList(A, T1, T2).
-rmFromList(A, [B|T1], [B|T2]):- rmFromList(A, T1, T2).
-
-
-tmp(A, B, T, P, circuito(A, B, T, P, S)):- tmp(A, B, [], [B], 1, 1, S).
-
-tmp(F, I, T1, [A|T2], N1, N2, S):- NewN is N1 - 1, NewN >= 0,
-			findall(X, (adjacente(X, A, _, _), not(member(X, T2))), L), 
-			append(L, T2, NewL),
-			tmp(F, I, [A|T1], NewL, NewN, N2, S).
-
-
-%loop(10).
-%loop(N):- N < 10, write('N: '), write(N), write('\n'), NewN is N + 1, loop(NewN).
-
-
-
-
-circuitoIDS(A, B, T, P, circuito(A, B, T, P, S)):- loop(1, A, [B], S).
+circuitoIDS(A, B, T, P, circuito(A, B, T, P, S)):- loopIDS(1, A, [B], S).
 
 loop_size(5).
 	
-loop(N, _, [_], []):- loop_size(N), !.
-loop(N, _, S, S):- loop_size(N), length(L, LEN), LEN > 1.
-loop(N, A, [B], S):- loop_size(SIZE), N < SIZE, 
-		write('N LOOP: '), write(N), write('\n'), 
-		NewN is N + 1, 
-		write('NewN LOOP: '), write(NewN), write('\n'), write('\n'), 
-		write('deu bem\n'),
+loopIDS(N, _, [_], []):- loop_size(N), !.
+loopIDS(N, _, S, S):- loop_size(N), length(S, LEN), LEN > 1.
+loopIDS(N, A, [B], S):- loop_size(SIZE), N < SIZE, 
+		%write('N LOOP: '), write(N), write('\n'), 
 		circuitoIDS(A, [B], N, S), length(S, LEN), LEN > 0.
-loop(N, A, [B], S):- loop_size(SIZE), N < SIZE,
-		write('N LOOP: '), write(N), write('\n'), 
+loopIDS(N, A, [B], S):- loop_size(SIZE), N < SIZE,
+		%write('N LOOP: '), write(N), write('\n'), 
 		NewN is N + 1, 
-		write('NewN LOOP: '), write(NewN), write('\n'), write('\n'), 
+		%write('NewN LOOP: '), write(NewN), write('\n'), write('\n'), 
 		circuitoIDS(A, [B], N, R),
 		length(R, 0),
-		write('deu mal\n'),
-		loop(NewN, A, [B], S).
+		loopIDS(NewN, A, [B], S).
 
 
-circuitoIDS(A, [A|T], _, [A|T]):- write('atão\n').
+circuitoIDS(A, [A|T], _, [A|T]).
 circuitoIDS(_, _, 0, []).
 circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T])),		
 			NewN is N - 1, NewN >= 0, 
-			write("NewN: "), write(NewN), write('\n'), 
-			write("Atual: "), write(B), write('\n'), 
-			write("Estado: "), write([B|T]), write('\n'), 
-			write("Próximo: "), write(X), write('\n'), 
-			write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'), 
+			%write("NewN: "), write(NewN), write('\n'), 
+			%write("Atual: "), write(B), write('\n'), 
+			%write("Estado: "), write([B|T]), write('\n'), 
+			%write("Próximo: "), write(X), write('\n'), 
+			%write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'), 
 			circuitoIDS(A, [X,B|T], NewN, S).
 
+
+distHeuristica(F, S):- mapa(L, _), distHeuristica(F, L, S).
+
+distHeuristica(_, [], []).
+distHeuristica(F, [nodo(F)|T1], [nodo(F, 0)|T2]):- distHeuristica(F, T1, T2).
+distHeuristica(F, [nodo(A)|T1], [nodo(A, D)|T2]):- 
+			circuitoBFS(F, A, transporte(tmp), 0, circuito(_, _, _, _, S)), 
+			createListAresta(S, _, D, _),
+			distHeuristica(F, T1, T2).
+
+distHeuristica(F, nodo(A), nodo(A, H)):- 
+	circuitoBFS(F, A, transporte(tmp), 0, circuito(_, _, _, _, S)), 
+	createListAresta(S, _, H, _), !.
+
+%mudar o custo maybe
+greedy(A, B, S/Total):-
+	distHeuristica(A, nodo(B), nodo(B, D)),
+	greedy(A, [[B]/0/D], R/Total/_),
+	reverse(R, S).
+
+greedy(F, L, Best):-
+	%write('L GREEDY: '), write(L), write('\n'),
+	select_best(L, Best),
+	%write('Best GREEDY: '), write(Best), write('\n'),
+	Best = [F|_]/_/_.
+
+greedy(F, L, S):-
+	select_best(L, Best),
+	%write('L: '), write(L), write('\n'),
+	%write('Best: '), write(Best), write('\n'),
+	select(Best, L, NewL),
+	%write('NewL: '), write(NewL), write('\n'),
+	expand_gulosa(F, Best, ExpL),
+	%write('ExpL: '), write(ExpL), write('\n'), write('\n'),
+	append(NewL, ExpL, New2L),
+	greedy(F, New2L, S).
+
+
+select_best([Best], Best):- !.
+select_best([P/C/D1, _/_/D2|T], Best):-
+	D1 =< D2, !,
+	select_best([P/C/D1|T], Best).
+select_best([_|T], Best):- select_best(T, Best).
+
+select(X, [X|T], T).
+select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
+
+expand_gulosa(A, Best, ExpL):-
+	findall(R, (adj2(A, Best, R)), ExpL).
+
+adj2(F, [A|T]/C/_, [B,A|T]/NewC/H):-
+	adjacente(A, B, D, _),
+	%write('D: '), write(D), write('\n'),
+	not(member(B, T)),
+	distHeuristica(F, nodo(B), nodo(B, H)),
+	NewC is C + D.
