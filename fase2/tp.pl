@@ -82,6 +82,10 @@ distHeuristica(F, nodo(A), nodo(A, H)):-
 	circuitoBFS(F, A, transporte(tmp), 0, circuito(_, _, _, _, S)), 
 	createListAresta(S, _, H, _), !.
 
+
+select(X, [X|T], T).
+select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
+
 %mudar o custo maybe
 greedy(A, B, S/Total):-
 	distHeuristica(A, nodo(B), nodo(B, D)),
@@ -90,32 +94,29 @@ greedy(A, B, S/Total):-
 
 greedy(F, L, Best):-
 	%write('L GREEDY: '), write(L), write('\n'),
-	select_best(L, Best),
+	select_greedy(L, Best),
 	%write('Best GREEDY: '), write(Best), write('\n'),
 	Best = [F|_]/_/_.
 
 greedy(F, L, S):-
-	select_best(L, Best),
+	select_greedy(L, Best),
 	%write('L: '), write(L), write('\n'),
 	%write('Best: '), write(Best), write('\n'),
 	select(Best, L, NewL),
 	%write('NewL: '), write(NewL), write('\n'),
-	expand_gulosa(F, Best, ExpL),
+	expand_adj(F, Best, ExpL),
 	%write('ExpL: '), write(ExpL), write('\n'), write('\n'),
 	append(NewL, ExpL, New2L),
 	greedy(F, New2L, S).
 
 
-select_best([Best], Best):- !.
-select_best([P/C/D1, _/_/D2|T], Best):-
+select_greedy([Best], Best):- !.
+select_greedy([P/C/D1, _/_/D2|T], Best):-
 	D1 =< D2, !,
-	select_best([P/C/D1|T], Best).
-select_best([_|T], Best):- select_best(T, Best).
+	select_greedy([P/C/D1|T], Best).
+select_greedy([_|T], Best):- select_greedy(T, Best).
 
-select(X, [X|T], T).
-select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
-
-expand_gulosa(A, Best, ExpL):-
+expand_adj(A, Best, ExpL):-
 	findall(R, (adj2(A, Best, R)), ExpL).
 
 adj2(F, [A|T]/C/_, [B,A|T]/NewC/H):-
@@ -124,3 +125,33 @@ adj2(F, [A|T]/C/_, [B,A|T]/NewC/H):-
 	not(member(B, T)),
 	distHeuristica(F, nodo(B), nodo(B, H)),
 	NewC is C + D.
+
+
+
+
+a*(A, B, S/Total):-
+	distHeuristica(A, nodo(B), nodo(B, D)),
+	a*(A, [[B]/0/D], R/Total/_),
+	reverse(R, S).
+
+a*(F, L, Best):-
+	select_a*(L, Best),
+	Best = [F|_]/_/_.
+
+a*(F, L, S):-
+	select_a*(L, Best),
+	%write('L: '), write(L), write('\n'),
+	%write('Best: '), write(Best), write('\n'),
+	select(Best, L, NewL),
+	%write('NewL: '), write(NewL), write('\n'),
+	expand_adj(F, Best, ExpL),
+	%write('ExpL: '), write(ExpL), write('\n'), write('\n'),
+	append(NewL, ExpL, New2L),
+	a*(F, New2L, S).
+
+
+select_a*([Best], Best):- !.
+select_a*([P/C1/D1, _/C2/D2|T], Best):-
+	C1 + D1 =< C2 + D2, !,
+	select_a*([P/C1/D1|T], Best).
+select_a*([_|T], Best):- select_a*(T, Best).
