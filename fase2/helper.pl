@@ -18,6 +18,8 @@ isget_hora_entrega(H/M, prazo(_,_, H/M ,_)).
 isget_data_entrega(0, prazo(_, _, _, 0)).
 isget_data_entrega(D/M/A, prazo(_, _, _, D/M/A)).
 
+isget_transporte_circuito(circuito(T, _, _), T).
+
 
 entrega_in_time(Hi, Di, Hf, Df, prazo(_, _, HE, DE)):-
 	is_older_than(Hi, Di, HE, DE), is_older_than(HE, DE, Hf, Df).
@@ -41,11 +43,22 @@ props_transporte(carro, 100, 25, 0.1).
 
 
 %
+createListAresta([_], []).
+createListAresta([A,B|T1], [aresta(A, B)|T2]):- 
+	createListAresta([B|T1], T2),
+	adjacente(A, B, _, _).
+
 createListAresta([_], [], 0).
 createListAresta([A,B|T1], [aresta(A, B, D2)|T2], NewD):- 
 	createListAresta([B|T1], T2, D),
-	adjacente(A, B, D2),
+	adjacente(A, B, D2, _),
 	NewD is D + D2.
+
+createListAresta([_], [], _, 0, 0).
+createListAresta([A,B|T1], [aresta(A, B, D2, C2)|T2], V, NewD, NewTime):- 
+	createListAresta([B|T1], T2, V, D, Time),
+	adjacente(A, B, D2, C2), calculaTempo(D2, V, C2, Time2),
+	NewD is D + D2, NewTime is Time + Time2.
 
 %
 distHeuristica(F, S):- mapa(L, _), distHeuristica(F, L, S).
@@ -81,26 +94,48 @@ timeHeuristica(F, nodo(A), T, P, nodo(A, H)):-
 
 %
 avaliarCircuito(circuito(Transporte, P, L), D, T):-
-	createListAresta(L, _, D), calculaVelocidade(Transporte, P, V), calculaTempo(D, V, T).
+	calculaVelocidade(Transporte, P, V), createListAresta(L, _, V, D, T).
 
 %
 calculaVelocidade(T, P, V):- props_transporte(T, _, VMax, LOSS), V is (VMax - P * LOSS).
 
 %
-calculaTempo(D, V, T):- T is (D * 60) / V.
+calculaTempo(D, V, C, T):- T is (D * 60) / (V * C).
 
 
 %
-cmpCircuitos(C1, C2, dist, S):- 
+cmpCircuitos(C1, C2, dist, C1):- 
 	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
-	D1 =< D2, S is C1.
-cmpCircuitos(C1, C2, dist, S):- 
+	D1 < D2.
+cmpCircuitos(C1, C2, dist, C2):- 
 	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
-	D1 > D2, S is C2.
+	D1 > D2.
+cmpCircuitos(C1, C2, dist, C1):- 
+	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+	D1 =:= D2,
+	isget_transporte_circuito(C1, bicicleta).
+cmpCircuitos(C1, C2, dist, C1):- 
+	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+	D1 =:= D2,
+	isget_transporte_circuito(C1, moto), isget_transporte_circuito(C2, carro).
+cmpCircuitos(C1, C2, dist, C2):- 
+	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+	D1 =:= D2.
 
-%cmpCircuitos(C1, C2, time, S):- 
-%	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
-%	T1 =< T2, S is C1.
-%cmpCircuitos(C1, C2, time, S):- 
-%	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
-%	D1 > D2, S is T2.
+
+cmpCircuitos(C1, C2, time, TMax, C1):- 
+	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+	T1 < TMax, T2 >= TMax.
+cmpCircuitos(C1, C2, time, TMax, C2):- 
+	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+	T2 < TMax, T1 >= TMax.
+cmpCircuitos(C1, C2, time, _, C1):- 
+	isget_transporte_circuito(C1, bicicleta), not(isget_transporte_circuito(C2, bicicleta)).
+cmpCircuitos(C1, C2, time, _, C2):- 
+	isget_transporte_circuito(C2, bicicleta), not(isget_transporte_circuito(C1, bicicleta)).
+cmpCircuitos(C1, C2, time, _, C1):- 
+	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+	T1 < T2.
+cmpCircuitos(C1, C2, time, _, C2):- 
+	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+	T1 >= T2.

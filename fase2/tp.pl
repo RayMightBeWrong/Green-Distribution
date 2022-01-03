@@ -13,7 +13,7 @@
 circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], S).
 
 circuitoDFS(A, [A|T], [A|T]).
-circuitoDFS(A, [B|T], S):- adjacente(X, B, _), not(member(X, [B|T])),
+circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
 			%write("Atual: "), write(B), write('\n'),
 			%write("Próximo: "), write(X), write('\n'),
 			%write("Estado: "), write([B|T]), write('\n'),
@@ -28,7 +28,7 @@ circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). %write("final: "), write(S), w
 circuitoBFS(F, [EstadosA|Outros], S):-
 	EstadosA = [Atual|_],
 	findall([X|EstadosA],
-		(F \== Atual, adjacente(Atual, X, _), not(member(X, EstadosA))), Novos),
+		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
 	append(Outros, Novos, Todos),
 	%write("Nodo atual: "), write(Atual), write("\n"),
 	%write("EstadosA: "), write(EstadosA), write("\n"),
@@ -56,7 +56,7 @@ loopIDS(N, A, [B], S):- loop_size(SIZE), N < SIZE,
 
 circuitoIDS(A, [A|T], _, [A|T]).
 circuitoIDS(_, _, 0, []).
-circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _), not(member(X, [B|T])),		
+circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T])),		
 			NewN is N - 1, NewN >= 0, 
 			%write("NewN: "), write(NewN), write('\n'), 
 			%write("Atual: "), write(B), write('\n'), 
@@ -104,14 +104,14 @@ expand_adj(A, H, Best, ExpL):-
 	findall(R, (adj2(A, H, Best, R)), ExpL).
 
 adj2(F, dist, [A|T]/C/_, [B,A|T]/NewC/H):-
-	adjacente(A, B, D),
+	adjacente(A, B, D, _),
 	%write('D: '), write(D), write('\n'),
 	not(member(B, T)),
 	distHeuristica(F, nodo(B), nodo(B, H)),
 	NewC is C + D.
 
 adj2(F, Transporte/P, [A|T]/C/_, [B,A|T]/NewC/H):-
-	adjacente(A, B, D),
+	adjacente(A, B, D, _),
 	not(member(B, T)),
 	timeHeuristica(F, nodo(B), Transporte, P, nodo(B, H)),
 	NewC is C + D.
