@@ -110,26 +110,25 @@ adj2(F, dist, [A|T]/C/_, [B,A|T]/NewC/H):-
 	distHeuristica(F, nodo(B), nodo(B, H)),
 	NewC is C + D.
 
-%adj2(F, time, [A|T]/C/_, [B,A|T]/NewC/H):-
-%	adjacente(A, B, D),
-%	not(member(B, T)),
-%	timeHeuristica(F, nodo(B), nodo(B, H)),
-%	NewC is C + D.
+adj2(F, Transporte/P, [A|T]/C/_, [B,A|T]/NewC/H):-
+	adjacente(A, B, D),
+	not(member(B, T)),
+	timeHeuristica(F, nodo(B), Transporte, P, nodo(B, H)),
+	NewC is C + D.
 
-
-a*(A, B, dist, S/Total):-
+% separar cálculo da distância de cálculo do tempo
+a*(A, B, S/Total):-
 	distHeuristica(A, nodo(B), nodo(B, D)),
 	a*(A, [[B]/0/D], dist, R/Total/_),
 	reverse(R, S).
-a*(A, B, time, S/Total):-
-	timeHeuristica(A, nodo(B), nodo(B, D)),
-	a*(A, [[B]/0/D], time, R/Total/_),
+a*(A, B, T, P, S/Total):-
+	timeHeuristica(A, nodo(B), T, P, nodo(B, D)),
+	write('what\n'),
+	a*(A, [[B]/0/D], T/P, R/Total/_),
 	reverse(R, S).
-
 a*(F, L, _, Best):-
 	select_a*(L, Best),
 	Best = [F|_]/_/_.
-
 a*(F, L, H, S):-
 	select_a*(L, Best),
 	select(Best, L, NewL),
