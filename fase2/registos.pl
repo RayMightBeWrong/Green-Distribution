@@ -77,6 +77,19 @@ registo(entrega(wally, transporte(moto)), encomenda(c19, fallarbor, 6, 35, 3), p
 registo(entrega(wally, transporte(moto)), encomenda(c20, littleroot, 6, 50, 4), prazo(16/15, 18/11/2021, 14/29, 18/11/2021)).
 registo(entrega(wally, transporte(moto)), encomenda(c21, mauville, 18, 60, 4), prazo(20/45, 18/11/2021, 18/37, 18/11/2021)).
 
+
+concluirEntrega(E,N,H/M,D/Mes/A) :- findall( (Ent,Enc,Pra), (registo(Ent,Enc,Pra),isget_estafeta(E,Ent), isget_data_entrega(0,Pra)) , S),
+									removerRegistos(S) , inserirRegisto(S,N,H/M,D/Mes/A).
+
+
+removerRegistos([]) :- !,fail.
+removerRegistos([(Ent,Enc,Pra)|_]) :- remocao(registo(Ent,Enc,Pra)).
+
+inserirRegisto([],_,_,_) :- !,fail.
+inserirRegisto([(Ent,Enc,Pra)|_],N,H/M,D/Mes/A) :- isget_cliente(C,Enc) , isget_local(L, Enc), isget_peso(Peso,Enc), isget_preco(Preco,Enc) ,
+										isget_hora_limite(HL , Pra) , isget_data_limite(DL , Pra),
+										insercao(registo(Ent,encomenda(C,L,Peso,Preco,N),prazo(HL,DL,H/M,D/Mes/A))).
+
 %Invariante estrutural -> Não permite adicionar informação repetida
 +registo(Ent,Enc,Pra) :: (findall((Ent,Enc,Pra),registo(Ent,Enc,Pra),S),
 						comprimento(S,L),
@@ -89,8 +102,8 @@ registo(entrega(wally, transporte(moto)), encomenda(c21, mauville, 18, 60, 4), p
 
 %Invariantes referenciais -> Não permitir a adição de informação sem respeitar as seguintes regras.
 
-%Só permite adicionar se o estafeta estiver registado.
-+registo(Ent,_,_) :: (isget_estafeta(Estafeta, Ent) , estafeta(Estafeta)).
+%Só permite adicionar se o estafeta estiver registado e utilizar o veiculo dado.
++registo(Ent,_,_) :: (isget_estafeta(Estafeta, Ent) , isget_veiculo(Veiculo,Ent) , estafeta(Estafeta,Veiculo)).
 
 %Não permite adicionar uma entrega a um estafeta que ainda esteja a realizar outra entrega.
 +registo(Ent,_,_) :: (isget_estafeta(Estafeta, Ent), findall((Prazo), (registo(entrega(Estafeta,_),_,Prazo) ,isget_data_entrega(0,Prazo)) ,S),
@@ -99,9 +112,6 @@ registo(entrega(wally, transporte(moto)), encomenda(c21, mauville, 18, 60, 4), p
 
 %Só permite adicionar se a classificação for maior que 0.
 +registo(_,Enc,_) :: (isget_nota(Nota, Enc) , Nota > 0).
-
-%Só permite adicionar se o veiculo estiver registado.
-+registo(Ent,_,_) :: (isget_veiculo(Veiculo, Ent) , veiculo(Veiculo)).
 
 %Só permite adicionar se a cidade de entrega estiver no mapa.
 +registo(_,Enc,_) :: (isget_local(Cidade, Enc) , 
