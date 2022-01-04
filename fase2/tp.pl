@@ -120,32 +120,26 @@ melhorCircuitoFromList(dist, [A,B|T1], S):-
 	melhorCircuitoFromList(dist, [BEST|T1], S).
 
 
-maisRapido(A, P, S):- 
-	%dividir a primeira lógica noutro predicado
+maisRapido(A, P, greedy, S):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
 	getIndexFromList(0, PS, FIRST),
 	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
-	%até aqui
 	buildGreedy(A, H, STARTS, [], RESULTS),
 	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
-	melhorCircuitoFromList(dist, TRACKS, S).
+	melhorCircuitoFromList(dist, TRACKS, S), !.
+
+maisRapido(A, P, a_estrela, S):- 
+	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
+	distHeuristica(A, H), !, partidasToNodos(E2, PS),
+	getIndexFromList(0, PS, FIRST),
+	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
+	buildA*(A, H, STARTS, [], RESULTS),
+	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
+	melhorCircuitoFromList(dist, TRACKS, S), !.
 
 
 
-
-
-
-
-
-
-
-greedy(A, S/Total):-
-	partidasToNodos(L),
-	distHeuristica(A, L, L2),
-	selectBestStarts(L2, L3),
-	buildGreedy(A, L3, [], L4),
-	length(L4, 1), getIndexFromList(0, L4, S/Total).
 
 buildGreedy(_, _, [], S, S).
 buildGreedy(A, H, [B|T1], T2, S):- 
@@ -154,25 +148,17 @@ buildGreedy(A, H, [B|T1], T2, S):-
 
 
 greedy(A, nodo(B), H, DIST, S/Total):-
-	%distHeuristica(A, nodo(B), nodo(B, D)),
 	greedy(A, H, [[B]/0/DIST], R/Total/_),
 	reverse(R, S).
 
-
 greedy(F, _, L, Best):-
-	%write('L GREEDY: '), write(L), write('\n'),
 	select_greedy(L, Best),
-	%write('Best GREEDY: '), write(Best), write('\n'),
 	Best = [F|_]/_/_.
 
 greedy(F, H, L, S):-
 	select_greedy(L, Best),
-	%write('L: '), write(L), write('\n'),
-	%write('Best: '), write(Best), write('\n'),
 	select(Best, L, NewL),
-	%write('NewL: '), write(NewL), write('\n'),
-	expand_adj(F, H, Best, ExpL),
-	%write('ExpL: '), write(ExpL), write('\n'), write('\n'),
+	expand_adj(H, Best, ExpL),
 	append(NewL, ExpL, New2L),
 	greedy(F, H, New2L, S).
 
@@ -183,15 +169,13 @@ select_greedy([P/C/H1, _/_/H2|T], Best):-
 	select_greedy([P/C/H1|T], Best).
 select_greedy([_|T], Best):- select_greedy(T, Best).
 
-expand_adj(A, H, Best, ExpL):-
-	findall(R, (adj2(A, H, Best, R)), ExpL).
+expand_adj(H, Best, ExpL):-
+	findall(R, (adj2(H, Best, R)), ExpL).
 
-adj2(F, H, [A|T]/C/_, [B,A|T]/NewC/RH):-
+adj2(H, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	adjacente(A, B, D, _),
-	%write('D: '), write(D), write('\n'),
 	not(member(B, T)),
 	getHeuristicaOfNodo(nodo(B), H, RH),
-	%distHeuristica(F, nodo(B), nodo(B, H)),
 	NewC is C + D.
 
 
@@ -199,29 +183,25 @@ adj2(F, H, [A|T]/C/_, [B,A|T]/NewC/RH):-
 
 
 
-%adj2(F, Transporte/P, [A|T]/C/_, [B,A|T]/NewC/H):-
-%	adjacente(A, B, D, _),
-%	not(member(B, T)),
-%	timeHeuristica(F, nodo(B), Transporte, P, nodo(B, H)),
-%	NewC is C + D.
-
 % separar cálculo da distância de cálculo do tempo
-a*(A, B, S/Total):-
-	distHeuristica(A, nodo(B), nodo(B, D)),
-	a*(A, [[B]/0/D], dist, R/Total/_),
+buildA*(_, _, [], S, S).
+buildA*(A, H, [B|T1], T2, S):- 
+	getHeuristicaOfNodo(B, H, RH),
+	a*(A, B, H, RH, R), buildA*(A, H, T1, [R|T2], S).
+
+
+
+a*(A, nodo(B), H, DIST, S/Total):-
+	a*(A, H, [[B]/0/DIST], R/Total/_),
 	reverse(R, S).
-a*(A, B, T, P, S/Total):-
-	timeHeuristica(A, nodo(B), T, P, nodo(B, D)),
-	write('what\n'),
-	a*(A, [[B]/0/D], T/P, R/Total/_),
-	reverse(R, S).
-a*(F, L, _, Best):-
+a*(F, _, L, Best):-
 	select_a*(L, Best),
 	Best = [F|_]/_/_.
-a*(F, L, H, S):-
+
+a*(F, H, L, S):-
 	select_a*(L, Best),
 	select(Best, L, NewL),
-	expand_adj(F, H, Best, ExpL),
+	expand_adj(H, Best, ExpL),
 	append(NewL, ExpL, New2L),
 	a*(F, New2L, H, S).
 
