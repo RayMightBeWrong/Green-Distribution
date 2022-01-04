@@ -1,13 +1,9 @@
-:- include('helper.pl').
-:- include('mapa.pl').
-
 :- op( 900,xfy,'::' ).
 :- dynamic registo/3.
 :- dynamic estafeta/1.
 
-veiculo(bicicleta).
-veiculo(moto).
-veiculo(carro).
+listaEstafetas([estafeta(brendan, moto, littleroot), estafeta(may, bicicleta, littleroot), estafeta(wally, moto, verdanturf), estafeta(wally, carro, verdanturf), 
+		estafeta(travis, carro, pacifidlog), estafeta(iris, bicicleta, mossdeep), estafeta(iris, carro, mossdeep)]). 
 
 estafeta(brendan, moto).
 estafeta(may, bicicleta).
@@ -26,9 +22,6 @@ partida(iris, mossdeep).
 
 %registo(entrega(estafeta, transporte(veiculo, coeficiente_green)), encomenda(cliente, local, volume, preço, classificação), prazo(hora_limite, data_limite, hora_de_entrega, data_de_entrega))
 %registo(A, B, C)
-
-%coeficiente green é sempre 0 para bicicletas
-%varia entre 5 e 10 para motos e carros
 
 registo(entrega(may, transporte(bicicleta)), encomenda(c1, slateport, 4, 20, 5), prazo(10/45, 15/11/2021, 10/15, 15/11/2021)). %may
 registo(entrega(may, transporte(bicicleta)), encomenda(c4, petalburg, 5, 20, 5), prazo(10/45, 16/11/2021, 10/10, 16/11/2021)).

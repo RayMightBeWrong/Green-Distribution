@@ -60,13 +60,19 @@ createListAresta([A,B|T1], [aresta(A, B, D2, C2)|T2], V, NewD, NewTime):-
 	adjacente(A, B, D2, C2), calculaTempo(D2, V, C2, Time2),
 	NewD is D + D2, NewTime is Time + Time2.
 
+
+%
+getHeuristicaOfNodo(nodo(A), [nodo(A, H)|_], H).
+getHeuristicaOfNodo(A, [_|T], H):- getHeuristicaOfNodo(A, T, H).
+
+
 %
 distHeuristica(F, S):- mapa(L, _), distHeuristica(F, L, S).
 
 distHeuristica(_, [], []).
 distHeuristica(F, [nodo(F)|T1], [nodo(F, 0)|T2]):- distHeuristica(F, T1, T2).
 distHeuristica(F, [nodo(A)|T1], [nodo(A, H)|T2]):- 
-	circuitoBFS(F, A, transporte(tmp), 0, circuito(_, _, _, _, S)), 
+	circuitoBFS(F, A, transporte(tmp), 0, circuito(_, _, S)), 
 	createListAresta(S, _, H),
 	distHeuristica(F, T1, T2).
 
@@ -139,3 +145,4 @@ cmpCircuitos(C1, C2, time, _, C1):-
 cmpCircuitos(C1, C2, time, _, C2):- 
 	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
 	T1 >= T2.
+
