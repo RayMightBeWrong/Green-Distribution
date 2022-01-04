@@ -56,9 +56,9 @@ registo(entrega(wally, transporte(moto)), encomenda(c21, mauville, 18, 60, 4), p
 -registo(Ent,Enc,Pra) :- nao(registo(Ent,Enc,Pra)) , nao(excecao(registo(Ent,Enc,Pra))).
 
 % Tipo incerto
-excecao(registo(Ent,Enc,prazo(H,D,HE,DE))) :- registo(Ent,Enc,prazo(H,D,xpto1,DE)).
-excecao(registo(Ent,encomenda(C,L,V,P,N),Pra)) :- registo(Ent,encomenda(C,L,xpto2,P,N),Pra).
-excecao(registo(Ent,encomenda(C,L,V,P,N),Pra)) :- registo(Ent,encomenda(C,L,V,xpto3,N),Pra).
+excecao(registo(Ent,Enc,prazo(H,D,_,DE))) :- registo(Ent,Enc,prazo(H,D,xpto1,DE)).
+excecao(registo(Ent,encomenda(C,L,_,P,N),Pra)) :- registo(Ent,encomenda(C,L,xpto2,P,N),Pra).
+excecao(registo(Ent,encomenda(C,L,V,_,N),Pra)) :- registo(Ent,encomenda(C,L,V,xpto3,N),Pra).
 
 %Tipo impreciso
 excecao(registo(entrega(wally, transporte(moto)), encomenda(c20, littleroot, 10, 50, 4), prazo(16/15, 16/11/2021, Hora/_, 16/11/2021))) :- Hora >= 9 , Hora =< 17.
@@ -66,8 +66,8 @@ excecao(registo(entrega(iris, transporte(X)), encomenda(c15, sootopolis, 2, 20, 
 excecao(registo(entrega(may, transporte(bicicleta)), encomenda(c4, petalburg, 5, P, 5), prazo(10/45, 18/11/2021, 10/10, 18/11/2021))) :- P > 15 , P < 35.
 
 %Tipo interdito
-excecao(registo(Ent,encomenda(C,L,V,P,N),Pra)) :- registo(Ent,encomenda(inter,L,V,P,N),Pra).
-excecao(registo(Ent,Enc,Pra)) :- registo(inter,Enc,Pra).
+excecao(registo(Ent,encomenda(_,L,V,P,N),Pra)) :- registo(Ent,encomenda(inter,L,V,P,N),Pra).
+excecao(registo(_,Enc,Pra)) :- registo(inter,Enc,Pra).
 
 nulo(inter).
 
@@ -86,8 +86,8 @@ inserirEntrega([(Ent,Enc,Pra)|_],N,H/M,D/Mes/A) :- isget_cliente(C,Enc) , isget_
 										insercao(registo(Ent,encomenda(C,L,Peso,Preco,N),prazo(HL,DL,H/M,D/Mes/A))).
 
 verificaEstafeta([],_,_) :- !, fail.
-verificaEstafeta([estafeta(E,T,I)|L],E,T).
-verificaEstafeta([estafeta(E,T,I)|L],Est,Trans):- verificaEstafeta(L,Est,Trans).
+verificaEstafeta([estafeta(E,T,_)|_],E,T).
+verificaEstafeta([estafeta(_,_,_)|L],Est,Trans):- verificaEstafeta(L,Est,Trans).
 
 
 %Invariante estrutural -> Não permite adicionar informação repetida

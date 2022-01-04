@@ -139,6 +139,14 @@ maisRapido(A, P, a_estrela, S):-
 	melhorCircuitoFromList(dist, TRACKS, S), !.
 
 
+maisEcologico(A, P, greedy, S):- 
+	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
+	distHeuristica(A, H), !, partidasToNodos(E2, PS),
+	getIndexFromList(0, PS, FIRST),
+	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
+	buildGreedy(A, H, STARTS, [], RESULTS),
+	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
+	melhorCircuitoFromList(dist, TRACKS, S), !.
 
 
 buildGreedy(_, _, [], S, S).

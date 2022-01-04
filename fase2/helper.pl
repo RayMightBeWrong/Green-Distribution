@@ -83,19 +83,22 @@ distHeuristica(F, nodo(A), nodo(A, H)):-
 
 
 %
-timeHeuristica(F, S):- mapa(L, _), timeHeuristica(F, L, S).
+timeHeuristica(F, T, P, S):- mapa(L, _), timeHeuristica(F, L, T, P, S).
 
 timeHeuristica(_, [], _, _, []).
-timeHeuristica(F, [nodo(F)|T1], T, P, [nodo(F, 0)|T2]):- timeHeuristica(F, T1, T, P, T2).
-timeHeuristica(F, [nodo(A)|T1], T, P, [nodo(A, H)|T2]):- 
-	circuitoBFS(F, A, T, P, S), 
-	avaliarCircuito(S, _, H),
-	timeHeuristica(F, T1, T, P, T2).
+timeHeuristica(F, [nodo(F)|T1], Transporte, P, [nodo(F, 0)|T2]):- 
+	timeHeuristica(F, T1, Transporte, P, T2).
+timeHeuristica(F, [nodo(A)|T1], Transporte, P, [nodo(A, H)|T2]):- 
+	circuitoBFS(F, A, transporte(Transporte), P, circuito(_,_,S)), 
+	calculaVelocidade(Transporte, P, V),
+	createListAresta(S, _, V, _, H),
+	timeHeuristica(F, T1, Transporte, P, T2).
 
-%
+% mudar este
 timeHeuristica(F, nodo(A), T, P, nodo(A, H)):- 
 	circuitoBFS(F, A, T, P, S), 
-        avaliarCircuito(S, _, H), !.
+	calculaVelocidade(T, P, V),
+	createListAresta(S, _, V, _, H), !.
 
 
 %
