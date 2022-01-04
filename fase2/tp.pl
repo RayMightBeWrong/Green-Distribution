@@ -108,6 +108,18 @@ estafetasPossiveis(N, [_|T1], P, T2, T3):-
 	NewN is N + 1,
 	estafetasPossiveis(NewN, T1, P, T2, T3).
 
+
+buildCircuitosFromEstafetas(_, [], _, _, S, S).
+buildCircuitosFromEstafetas(L, [INDEX|T1], [TRACK/_|T2], P, T3, S):-
+	getIndexFromList(INDEX, L, estafeta(_, Transporte, _)),
+	buildCircuitosFromEstafetas(L, T1, T2, P, [circuito(Transporte, P, TRACK)|T3], S).
+
+melhorCircuitoFromList(_, [S], S).
+melhorCircuitoFromList(dist, [A,B|T1], S):-
+	cmpCircuitos(A, B, dist, BEST),
+	melhorCircuitoFromList(dist, [BEST|T1], S).
+
+
 maisRapido(A, P, S):- 
 	%dividir a primeira lógica noutro predicado
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
@@ -115,8 +127,9 @@ maisRapido(A, P, S):-
 	getIndexFromList(0, PS, FIRST),
 	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
 	%até aqui
-	buildGreedy(A, H, STARTS, [], S).
-	%getBestCircuito
+	buildGreedy(A, H, STARTS, [], RESULTS),
+	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
+	melhorCircuitoFromList(dist, TRACKS, S).
 
 
 
@@ -137,12 +150,11 @@ greedy(A, S/Total):-
 buildGreedy(_, _, [], S, S).
 buildGreedy(A, H, [B|T1], T2, S):- 
 	getHeuristicaOfNodo(B, H, RH),
-	greedy(A, B, H, RH, R), write(R), buildGreedy(A, H, T1, [R|T2], S).
+	greedy(A, B, H, RH, R), buildGreedy(A, H, T1, [R|T2], S).
 
 
 greedy(A, nodo(B), H, DIST, S/Total):-
 	%distHeuristica(A, nodo(B), nodo(B, D)),
-	write(B),
 	greedy(A, H, [[B]/0/DIST], R/Total/_),
 	reverse(R, S).
 
