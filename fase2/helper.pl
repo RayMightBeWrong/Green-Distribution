@@ -95,10 +95,10 @@ timeHeuristica(F, [nodo(A)|T1], Transporte, P, [nodo(A, H)|T2]):-
 	timeHeuristica(F, T1, Transporte, P, T2).
 
 % mudar este
-timeHeuristica(F, nodo(A), T, P, nodo(A, H)):- 
-	circuitoBFS(F, A, T, P, S), 
-	calculaVelocidade(T, P, V),
-	createListAresta(S, _, V, _, H), !.
+%timeHeuristica(F, nodo(A), T, P, nodo(A, H)):- 
+%	circuitoBFS(F, A, T, P, S), 
+%	calculaVelocidade(T, P, V),
+%	createListAresta(S, _, V, _, H), !.
 
 
 %

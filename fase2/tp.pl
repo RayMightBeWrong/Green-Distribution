@@ -119,6 +119,10 @@ melhorCircuitoFromList(dist, [A,B|T1], S):-
 	cmpCircuitos(A, B, dist, BEST),
 	melhorCircuitoFromList(dist, [BEST|T1], S).
 
+melhorCircuitoFromList(_, _, [S], S).
+melhorCircuitoFromList(time, TMax, [A,B|T1], S):-
+	cmpCircuitos(A, B, time, TMax, BEST),
+	melhorCircuitoFromList(time, TMax, [BEST|T1], S).
 
 maisRapido(A, P, greedy, S):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
@@ -138,25 +142,39 @@ maisRapido(A, P, a_estrela, S):-
 	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
 	melhorCircuitoFromList(dist, TRACKS, S), !.
 
-
-maisEcologico(A, P, greedy, S):- 
-	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
-	distHeuristica(A, H), !, partidasToNodos(E2, PS),
-	getIndexFromList(0, PS, FIRST),
-	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
-	buildGreedy(A, H, STARTS, [], RESULTS),
-	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
-	melhorCircuitoFromList(dist, TRACKS, S), !.
-
-
 buildGreedy(_, _, [], S, S).
 buildGreedy(A, H, [B|T1], T2, S):- 
 	getHeuristicaOfNodo(B, H, RH),
 	greedy(A, B, H, RH, R), buildGreedy(A, H, T1, [R|T2], S).
 
 
-greedy(A, nodo(B), H, DIST, S/Total):-
-	greedy(A, H, [[B]/0/DIST], R/Total/_),
+%adicionar tempo máximo
+maisEcologico(A, P, TMax, greedy, S):- 
+	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
+	write(E2),
+	timeHeuristica(A, bicicleta, P, HBIKE),
+	timeHeuristica(A, moto, P, HMOTO),
+	timeHeuristica(A, carro, P, HCARRO), !,
+	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, E2, [], RESULTS),
+	melhorCircuitoFromList(time, TMax, RESULTS, S), !.
+
+buildGreedyTime(_, _, _, _, _, [], S, S).
+buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,bicicleta,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HBIKE, RH),
+	greedy(A, nodo(CITY), HBIKE, RH, TRACK/_),
+	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(bicicleta, P, TRACK)|T2], S). 
+buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,moto,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HMOTO, RH),
+	greedy(A, nodo(CITY), HMOTO, RH, TRACK/_),
+	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(moto, P, TRACK)|T2], S). 
+buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,carro,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HCARRO, RH),
+	greedy(A, nodo(CITY), HCARRO, RH, TRACK/_),
+	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(carro, P, TRACK)|T2], S). 
+
+
+greedy(A, nodo(B), H, RH, S/Total):-
+	greedy(A, H, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
 
 greedy(F, _, L, Best):-
@@ -169,7 +187,6 @@ greedy(F, H, L, S):-
 	expand_adj(H, Best, ExpL),
 	append(NewL, ExpL, New2L),
 	greedy(F, H, New2L, S).
-
 
 select_greedy([Best], Best):- !.
 select_greedy([P/C/H1, _/_/H2|T], Best):-
@@ -185,10 +202,6 @@ adj2(H, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	not(member(B, T)),
 	getHeuristicaOfNodo(nodo(B), H, RH),
 	NewC is C + D.
-
-
-
-
 
 
 % separar cálculo da distância de cálculo do tempo
