@@ -138,7 +138,7 @@ maisRapido(A, P, a_estrela, S):-
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
 	getIndexFromList(0, PS, FIRST),
 	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
-	buildA*(A, H, STARTS, [], RESULTS),
+	buildAEstrela(A, H, STARTS, [], RESULTS),
 	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
 	melhorCircuitoFromList(dist, TRACKS, S), !.
 
@@ -148,14 +148,26 @@ buildGreedy(A, H, [B|T1], T2, S):-
 	greedy(A, B, H, RH, R), buildGreedy(A, H, T1, [R|T2], S).
 
 
-%adicionar tempo máximo
+buildAEstrela(_, _, [], S, S).
+buildAEstrela(A, H, [B|T1], T2, S):- 
+	getHeuristicaOfNodo(B, H, RH),
+	aEstrela(A, B, H, RH, R), buildAEstrela(A, H, T1, [R|T2], S).
+
+
 maisEcologico(A, P, TMax, greedy, S):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
-	write(E2),
 	timeHeuristica(A, bicicleta, P, HBIKE),
 	timeHeuristica(A, moto, P, HMOTO),
 	timeHeuristica(A, carro, P, HCARRO), !,
 	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, E2, [], RESULTS),
+	melhorCircuitoFromList(time, TMax, RESULTS, S), !.
+
+maisEcologico(A, P, TMax, a_estrela, S):- 
+	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
+	timeHeuristica(A, bicicleta, P, HBIKE),
+	timeHeuristica(A, moto, P, HMOTO),
+	timeHeuristica(A, carro, P, HCARRO), !,
+	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, E2, [], RESULTS),
 	melhorCircuitoFromList(time, TMax, RESULTS, S), !.
 
 buildGreedyTime(_, _, _, _, _, [], S, S).
@@ -171,6 +183,24 @@ buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,carro,CITY)|T1], T2, S):
 	getHeuristicaOfNodo(nodo(CITY), HCARRO, RH),
 	greedy(A, nodo(CITY), HCARRO, RH, TRACK/_),
 	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(carro, P, TRACK)|T2], S). 
+
+
+buildAEstrelaTime(_, _, _, _, _, [], S, S).
+buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,bicicleta,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HBIKE, RH),
+	calculaVelocidade(bicicleta, P, V),
+	aEstrelaTime(A, nodo(CITY), HBIKE, RH, V, TRACK/_),
+	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(bicicleta, P, TRACK)|T2], S). 
+buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,moto,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HMOTO, RH),
+	calculaVelocidade(moto, P, V),
+	aEstrelaTime(A, nodo(CITY), HMOTO, RH, V, TRACK/_),
+	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(moto, P, TRACK)|T2], S). 
+buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,carro,CITY)|T1], T2, S):- 
+	getHeuristicaOfNodo(nodo(CITY), HCARRO, RH),
+	calculaVelocidade(carro, P, V),
+	aEstrelaTime(A, nodo(CITY), HCARRO, RH, V, TRACK/_),
+	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(carro, P, TRACK)|T2], S). 
 
 
 greedy(A, nodo(B), H, RH, S/Total):-
@@ -194,8 +224,47 @@ select_greedy([P/C/H1, _/_/H2|T], Best):-
 	select_greedy([P/C/H1|T], Best).
 select_greedy([_|T], Best):- select_greedy(T, Best).
 
+
+
+aEstrela(A, nodo(B), H, RH, S/Total):-
+	aEstrela(A, H, [[B]/0/RH], R/Total/_),
+	reverse(R, S).
+aEstrela(F, _, L, Best):-
+	select_aEstrela(L, Best),
+	Best = [F|_]/_/_.
+aEstrela(F, H, L, S):-
+	select_aEstrela(L, Best),
+	select(Best, L, NewL),
+	expand_adj(H, Best, ExpL),
+	append(NewL, ExpL, New2L),
+	aEstrela(F, H, New2L, S).
+
+
+aEstrelaTime(A, nodo(B), H, RH, V, S/Total):-
+	aEstrelaTime(A, H, V, [[B]/0/RH], R/Total/_),
+	reverse(R, S).
+aEstrelaTime(F, _, _, L, Best):-
+	select_aEstrela(L, Best),
+	Best = [F|_]/_/_.
+aEstrelaTime(F, H, V, L, S):-
+	select_aEstrela(L, Best),
+	select(Best, L, NewL),
+	expand_adj(H, V, Best, ExpL),
+	append(NewL, ExpL, New2L),
+	aEstrelaTime(F, H, V, New2L, S).
+
+select_aEstrela([Best], Best):- !.
+select_aEstrela([P/C1/H1, _/C2/H2|T], Best):-
+	C1 + H1 =< C2 + H2, !,
+	select_aEstrela([P/C1/H1|T], Best).
+select_aEstrela([_|T], Best):- select_aEstrela(T, Best).
+
+
 expand_adj(H, Best, ExpL):-
 	findall(R, (adj2(H, Best, R)), ExpL).
+
+expand_adj(H, V, Best, ExpL):-
+	findall(R, (adj2(H, V, Best, R)), ExpL).
 
 adj2(H, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	adjacente(A, B, D, _),
@@ -203,31 +272,9 @@ adj2(H, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	getHeuristicaOfNodo(nodo(B), H, RH),
 	NewC is C + D.
 
-
-% separar cálculo da distância de cálculo do tempo
-buildA*(_, _, [], S, S).
-buildA*(A, H, [B|T1], T2, S):- 
-	getHeuristicaOfNodo(B, H, RH),
-	a*(A, B, H, RH, R), buildA*(A, H, T1, [R|T2], S).
-
-
-
-a*(A, nodo(B), H, DIST, S/Total):-
-	a*(A, H, [[B]/0/DIST], R/Total/_),
-	reverse(R, S).
-a*(F, _, L, Best):-
-	select_a*(L, Best),
-	Best = [F|_]/_/_.
-
-a*(F, H, L, S):-
-	select_a*(L, Best),
-	select(Best, L, NewL),
-	expand_adj(H, Best, ExpL),
-	append(NewL, ExpL, New2L),
-	a*(F, New2L, H, S).
-
-select_a*([Best], Best):- !.
-select_a*([P/C1/H1, _/C2/H2|T], Best):-
-	C1 + H1 =< C2 + H2, !,
-	select_a*([P/C1/H1|T], Best).
-select_a*([_|T], Best):- select_a*(T, Best).
+adj2(H, V, [A|T]/C/_, [B,A|T]/NewC/RH):-
+	adjacente(A, B, D, COEF),
+	not(member(B, T)),
+	getHeuristicaOfNodo(nodo(B), H, RH),
+	calculaTempo(D, V, COEF, TIME),
+	NewC is C + TIME.
