@@ -15,7 +15,7 @@ estafeta(iris, carro, mossdeep).
 %registo(A, B, C, D)
 
 registo(entrega(may, transporte(bicicleta)), encomenda(c1, slateport, 4, 20, 5), circuito([littleroot,oldale,slateport,oldale,littleroot]),prazo(10/45, 15/11/2021, 10/15, 15/11/2021)). %may
-registo(entrega(may, transporte(bicicleta)), encomenda(c4, petalburg, 5, 20, 5), circuito([littleroot,oldale,petalburg,oldale,littleroot]),prazo(10/45, 16/11/2021, 10/10, 16/11/2021)).
+registo(entrega(may, transporte(bicicleta)), encomenda(c4, petalburg, 4, 20, 5), circuito([littleroot,oldale,petalburg,oldale,littleroot]),prazo(10/45, 16/11/2021, 10/10, 16/11/2021)).
 registo(entrega(may, transporte(bicicleta)), encomenda(c2, petalburg, 3, 25, 5), circuito([littleroot,oldale,petalburg,oldale,littleroot]),prazo(15/45, 15/11/2021, 14/30, 15/11/2021)).
 registo(entrega(may, transporte(bicicleta)), encomenda(c3, rustboro, 3, 22, 5), circuito([littleroot,oldale,petalburg,rustboro,petalburg,oldale,littleroot]),prazo(19/45, 15/11/2021, 18/45, 15/11/2021)).
 registo(entrega(may, transporte(bicicleta)), encomenda(c5, oldale, 3, 22, 5), circuito([littleroot,oldale,littleroot]),prazo(16/45, 16/11/2021, 12/30, 16/11/2021)).

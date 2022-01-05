@@ -315,4 +315,42 @@ adj2(H, V, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	calculaTempo(D, V, COEF, TIME),
 	NewC is C + TIME.
 
-circuitosMaisEntregas() :- findall(Cir,registo(_,_,circuito(Cir),_),S), write(S).
+circuitosMaisEntregas(RESULT) :- 
+	findall(Cir,registo(_,_,circuito(Cir),_),S), !,
+	maisEntregas(S, [], TRACKS, [], VALORES),
+	selectBest(RESULT, TRACKS, VALORES), !.
+
+selectBest(S, [S], _).
+selectBest(S, [A,_|T1], [NR_A,NR_B|T2]):- 
+	NR_A > NR_B, selectBest(S, [A|T1], [NR_A|T2]).
+selectBest(S, [_,B|T1], [NR_A,NR_B|T2]):- 
+	NR_A =< NR_B, selectBest(S, [B|T1], [NR_B|T2]).
+
+maisEntregas([], TRACKS, TRACKS, VALORES, VALORES).
+maisEntregas([TRACK|T1], T2, TRACKS, T3, VALORES):- 
+	member(TRACK, T2),
+	findIndexFromList(TRACK, T2, INDEX),
+	getIndexFromList(INDEX, T3, OLD_NR), NEW_NR is OLD_NR + 1,
+	modIndexFromList(INDEX, NEW_NR, T3, NEW_T3),
+	maisEntregas(T1, T2, TRACKS, NEW_T3, VALORES).
+maisEntregas([TRACK|T1], T2, TRACKS, T3, VALORES):-
+	not(member(TRACK, T2)),
+	maisEntregas(T1, [TRACK|T2], TRACKS, [1|T3], VALORES).
+
+
+circuitosMaisPeso(RESULT) :- 
+	findall((Cir,PESO), (registo(ARG1,encomenda(A2,A3,PESO,A4,A5),circuito(Cir),ARG4),
+				not(excecao(registo(ARG1, encomenda(A2,A3,PESO,A4,A5), circuito(Cir), ARG4)))),S), !,
+	maisPeso(S, [], TRACKS, [], VALORES),
+	selectBest(RESULT, TRACKS, VALORES), !.
+
+maisPeso([], TRACKS, TRACKS, VALORES, VALORES).
+maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):- 
+	member(TRACK, T2),
+	findIndexFromList(TRACK, T2, INDEX),
+	getIndexFromList(INDEX, T3, OLD_NR), NEW_NR is OLD_NR + PESO,
+	modIndexFromList(INDEX, NEW_NR, T3, NEW_T3),
+	maisPeso(T1, T2, TRACKS, NEW_T3, VALORES).
+maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):-
+	not(member(TRACK, T2)),
+	maisPeso(T1, [TRACK|T2], TRACKS, [PESO|T3], VALORES).

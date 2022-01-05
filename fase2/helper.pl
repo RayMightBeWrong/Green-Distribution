@@ -56,6 +56,12 @@ reverseBack(L, S):-
 getIndexFromList(0, [S|_], S).
 getIndexFromList(N, [_|T], S):- N > 0, NewN is N - 1, getIndexFromList(NewN, T, S).
 
+findIndexFromList(X, [X|_], 0).
+findIndexFromList(X, [_|T], NEW_N):- findIndexFromList(X, T, N), NEW_N is N + 1.
+
+modIndexFromList(0, X, [_|T], [X|T]).
+modIndexFromList(N, X, [A|T], [A|S]):- N > 0, NewN is N - 1, modIndexFromList(NewN, X, T, S).
+
 rmIndexFromList(0, [_|S], S).
 rmIndexFromList(N, [X|T1], [X|T2]):- N > 0, NewN is N - 1, rmIndexFromList(NewN, T1, T2).
 
@@ -187,4 +193,3 @@ cmpCircuitos(DEST, C1, C2, time, _, C1):-
 cmpCircuitos(DEST, C1, C2, time, _, C2):- 
 	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
 	T1 >= T2.
-
