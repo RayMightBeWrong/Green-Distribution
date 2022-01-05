@@ -126,7 +126,7 @@ avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, 
 	adjacente(A, B, DIST, COEF),
 	getInfoFromEncomendas(ENCOMENDAS, CITIES, _),
 	member(A, CITIES),
-	getIndexFromList(INDEX, CITIES, A), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
+	findIndexFromList(A, CITIES, INDEX), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
 	getInfoFromEncomendas(NEW_ENCOMENDAS, _, PESO),
 	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
 	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
@@ -157,39 +157,3 @@ calculaVelocidade(T, P, V):- props_transporte(T, _, VMax, LOSS), V is (VMax - P 
 calculaTempo(D, V, C, T):- T is (D * 60) / (V * C).
 
 
-%
-cmpCircuitos(DEST, C1, C2, dist, C1):- 
-	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
-	D1 < D2.
-cmpCircuitos(DEST, C1, C2, dist, C2):- 
-	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
-	D1 > D2.
-cmpCircuitos(DEST, C1, C2, dist, C1):- 
-	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
-	D1 =:= D2,
-	isget_transporte_circuito(C1, bicicleta).
-cmpCircuitos(DEST, C1, C2, dist, C1):- 
-	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
-	D1 =:= D2,
-	isget_transporte_circuito(C1, moto), isget_transporte_circuito(C2, carro).
-cmpCircuitos(DEST, C1, C2, dist, C2):- 
-	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
-	D1 =:= D2.
-
-
-cmpCircuitos(DEST, C1, C2, time, TMax, C1):- 
-	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
-	T1 < TMax, T2 >= TMax.
-cmpCircuitos(DEST, C1, C2, time, TMax, C2):- 
-	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
-	T2 < TMax, T1 >= TMax.
-cmpCircuitos(_, C1, C2, time, _, C1):- 
-	isget_transporte_circuito(C1, bicicleta), not(isget_transporte_circuito(C2, bicicleta)).
-cmpCircuitos(_, C1, C2, time, _, C2):- 
-	isget_transporte_circuito(C2, bicicleta), not(isget_transporte_circuito(C1, bicicleta)).
-cmpCircuitos(DEST, C1, C2, time, _, C1):- 
-	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
-	T1 < T2.
-cmpCircuitos(DEST, C1, C2, time, _, C2):- 
-	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
-	T1 >= T2.

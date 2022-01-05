@@ -132,7 +132,7 @@ selectBestStarts(H, [_|T1], [_|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 estafetasPossiveis(_, [], _, [], []).
 estafetasPossiveis(N, [estafeta(A, Transporte, C)|T1], P, [estafeta(A, Transporte, C)|T2], [N|T3]):-
 	props_transporte(Transporte, PMax, _, _),
-	P < PMax, 
+	P =< PMax, 
 	NewN is N + 1,
 	estafetasPossiveis(NewN, T1, P, T2, T3).
 estafetasPossiveis(N, [_|T1], P, T2, T3):- 
@@ -354,3 +354,61 @@ maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):-
 maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):-
 	not(member(TRACK, T2)),
 	maisPeso(T1, [TRACK|T2], TRACKS, [PESO|T3], VALORES).
+
+
+
+
+cmpCircuitos(DEST, C1, C2, dist, C1):-
+        avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
+        D1 < D2.
+cmpCircuitos(DEST, C1, C2, dist, C2):-
+        avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
+        D1 > D2.
+cmpCircuitos(DEST, C1, C2, dist, C1):-
+        avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
+        D1 =:= D2,
+        isget_transporte_circuito(C1, bicicleta).
+cmpCircuitos(DEST, C1, C2, dist, C1):-
+        avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
+        D1 =:= D2,
+        isget_transporte_circuito(C1, moto), isget_transporte_circuito(C2, carro).
+cmpCircuitos(DEST, C1, C2, dist, C2):-
+        avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
+        D1 =:= D2.
+
+
+cmpCircuitos(DEST, C1, C2, time, TMax, C1):-
+        avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
+        T1 < TMax, T2 >= TMax.
+cmpCircuitos(DEST, C1, C2, time, TMax, C2):-
+        avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
+        T2 < TMax, T1 >= TMax.
+cmpCircuitos(_, C1, C2, time, _, C1):-
+        isget_transporte_circuito(C1, bicicleta), not(isget_transporte_circuito(C2, bicicleta)).
+cmpCircuitos(_, C1, C2, time, _, C2):-
+        isget_transporte_circuito(C2, bicicleta), not(isget_transporte_circuito(C1, bicicleta)).
+cmpCircuitos(DEST, C1, C2, time, _, C1):-
+        avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
+        T1 < T2.
+cmpCircuitos(DEST, C1, C2, time, _, C2):-
+        avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
+        T1 >= T2.
+
+
+cmpMultiplasEntregas(A, ENCOMENDAS, TRANSPORTE, DIST_ONE, TIME_ONE, DIST_MULTIPLAS, TIME_MULTIPLAS):-
+	getInfoFromEncomendas(ENCOMENDAS, _, PESO_TOTAL),
+	props_transporte(TRANSPORTE, PMAX, _, _), PMAX >= PESO_TOTAL,
+	xEntregas(A, TRANSPORTE, ENCOMENDAS, TRACK_MULTIPLAS),
+	avaliarCircuitoXEntregas(TRACK_MULTIPLAS, DIST_MULTIPLAS, TIME_MULTIPLAS),
+	buildMultiplasEntregas(A, TRANSPORTE, ENCOMENDAS, DIST_ONE, TIME_ONE),
+	write("TIME ENTREGAS SIMULTÂNEAS: "), write(TIME_MULTIPLAS), write('\n'),
+	write("DIST ENTREGAS SIMULTÂNEAS: "), write(DIST_MULTIPLAS), write('\n'),
+	write("TIME ENTREGAS SEQUENCIAIS: "), write(TIME_ONE), write('\n'),
+	write("DIST ENTREGAS SEQUENCIAIS: "), write(DIST_ONE), write('\n\n'), !.
+
+buildMultiplasEntregas(_, _, [], 0, 0).
+buildMultiplasEntregas(A, TRANSPORTE, [encomenda(B,PESO)|T1], NEWDIST, NEWTIME):-
+	circuitoBFS(A, B, TRANSPORTE, PESO, TRACK),
+	avaliarCircuito(B, TRACK, DIST, TIME),
+	buildMultiplasEntregas(A, TRANSPORTE, T1, DIST2, TIME2),
+	NEWDIST is DIST + DIST2, NEWTIME is TIME + TIME2.

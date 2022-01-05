@@ -76,7 +76,7 @@ excecao(registo(_,Enc,Cir,Pra)) :- registo(inter,Enc,Cir,Pra).
 
 nulo(inter).
 
-inserirRegisto(E,T,C,L,V,P,H,D) :- estafeta(E,T,X) ,circuitoBFS(X,L,T,P,circuito(Trans,Peso,Cir)),evolucao(registo(entrega(E,transporte(T)),encomenda(C,L,V,P,-1),circuito(Cir),prazo(H,D,0,0))), !.
+inserirRegisto(E,T,C,L,V,P,H,D) :- estafeta(E,T,X) ,circuitoBFS(X,L,T,P,circuito(_,_,Cir)),evolucao(registo(entrega(E,transporte(T)),encomenda(C,L,V,P,-1),circuito(Cir),prazo(H,D,0,0))), !.
 
 concluirEntrega(E,N,H/M,D/Mes/A) :- findall( (Ent,Enc,Cir,Pra), (registo(Ent,Enc,Cir,Pra),isget_estafeta(E,Ent), isget_data_entrega(0,Pra)) , S),
 									removerRegisto(S) , inserirEntrega(S,N,H/M,D/Mes/A) , !.
