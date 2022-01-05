@@ -39,7 +39,7 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 	circuitoBFS(F, Todos, S).
 
 
-circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoBFS_noReverse(B, [[A]], S).
+circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)	):- circuitoBFS_noReverse(B, [[A]], S).
 
 circuitoBFS_noReverse(F, [[F|T]|_], S):- reverse([F|T], S). 
 
@@ -311,3 +311,5 @@ adj2(H, V, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	getHeuristicaOfNodo(nodo(B), H, RH),
 	calculaTempo(D, V, COEF, TIME),
 	NewC is C + TIME.
+
+circuitosMaisEntregas() :- findall(Cir,registo(_,_,circuito(Cir),_),S), write(S).
