@@ -2,9 +2,13 @@
 :- dynamic registo/3.
 :- dynamic estafeta/3.
 
-listaEstafetas([estafeta(brendan, moto, littleroot), estafeta(may, bicicleta, littleroot), estafeta(wally, moto, verdanturf), estafeta(wally, carro, verdanturf), 
-		estafeta(travis, carro, pacifidlog), estafeta(iris, bicicleta, mossdeep), estafeta(iris, carro, mossdeep)]). 
-
+estafeta(brendan, moto, littleroot).
+estafeta(may, bicicleta, littleroot).
+estafeta(wally, moto, verdanturf).
+estafeta(wally, carro, verdanturf).
+estafeta(travis, carro, pacifidlog).
+estafeta(iris, bicicleta, mossdeep).
+estafeta(iris, carro, mossdeep).
 
 %registo(entrega(estafeta, transporte(veiculo)), encomenda(cliente, local, volume, preço, classificação), prazo(hora_limite, data_limite, hora_de_entrega, data_de_entrega))
 %registo(A, B, C)

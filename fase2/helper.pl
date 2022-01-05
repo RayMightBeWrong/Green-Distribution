@@ -43,6 +43,16 @@ props_transporte(carro, 100, 25, 0.1).
 
 
 %
+listaEstafetas(E):- findall(estafeta(A,B,C), (estafeta(A,B,C)), E).
+
+%
+reverseBack([], []).
+reverseBack(L, S):- 
+	length(L, N), RM_INDEX is N - 1,
+	rmIndexFromList(RM_INDEX, L, L2),
+	reverse(L2, L3), append(L, L3, S).
+
+%
 createListAresta([_], []).
 createListAresta([A,B|T1], [aresta(A, B)|T2]):- 
 	createListAresta([B|T1], T2),

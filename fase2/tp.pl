@@ -20,14 +20,14 @@ gera_todos(A, PESO, [estafeta(_,TRANSPORTE,CITY)|T1], T2, S):-
 % P -> peso da encomenda
 
 % depth first search
-circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], S).
+circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], TRACK), reverseBack(TRACK, S).
 
 circuitoDFS(A, [A|T], [A|T]).
 circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
 	circuitoDFS(A, [X,B|T], S).
 			
 % breadth first search 
-circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], S).
+circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], TRACK),reverseBack(TRACK, S) .
 
 circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). 
 
@@ -37,6 +37,18 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
 	append(Outros, Novos, Todos),
 	circuitoBFS(F, Todos, S).
+
+
+circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoBFS_noReverse(B, [[A]], S).
+
+circuitoBFS_noReverse(F, [[F|T]|_], S):- reverse([F|T], S). 
+
+circuitoBFS_noReverse(F, [EstadosA|Outros], S):-
+	EstadosA = [Atual|_],
+	findall([X|EstadosA],
+		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
+	append(Outros, Novos, Todos),
+	circuitoBFS_noReverse(F, Todos, S).
 
 
 % encomenda(local, peso)
