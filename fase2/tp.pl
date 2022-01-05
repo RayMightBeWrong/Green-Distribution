@@ -54,7 +54,11 @@ circuitoBFS_noReverse(F, [EstadosA|Outros], S):-
 % encomenda(local, peso)
 xEntregas(A, TRANSPORTE, ENCOMENDAS, circuito(TRANSPORTE, ENCOMENDAS, S)):- 
 	getInfoFromEncomendas(ENCOMENDAS, CITIES, _), 
-	xEntregasTrack(A, CITIES, S).
+	xEntregasTrack(A, CITIES, TRACK1),
+	length(TRACK1, N), INDEX is N - 1,
+	getIndexFromList(INDEX, TRACK1, ELEM), rmIndexFromList(INDEX, TRACK1, NEW_TRACK1),
+	circuitoBFS_noReverse(ELEM, A, TRANSPORTE, 0, circuito(_,_,TRACK2)),
+	append(NEW_TRACK1, TRACK2, S).
 
 xEntregasTrack(A, L_PONTOS, S):- xEntregasTrack(L_PONTOS, L_PONTOS, [[A]], S).
 
@@ -76,9 +80,10 @@ xEntregasTrack(PONTOS, L_PONTOS, [EstadosA|Outros], S):-
 	xEntregasTrack(PONTOS, L_PONTOS, Todos, S).
 
 % iterative deepening search
-circuitoIDS(A, B, T, P, circuito(T, P, S)):- loopIDS(1, A, [B], S).
+circuitoIDS(A, B, T, P, circuito(T, P, S)):- loopIDS(1, A, [B], TRACK), reverseBack(TRACK, S).
 
-loop_size(5).
+% o número de pontos no mapa
+loop_size(16).
 	
 loopIDS(N, _, [_], []):- loop_size(N), !.
 loopIDS(N, _, S, S):- loop_size(N), length(S, LEN), LEN > 1.
@@ -124,13 +129,6 @@ selectBestStarts(H, [A|T1], [INDEXA|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 selectBestStarts(H, [_|T1], [_|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 	selectBestStarts(H, T1, T2, [INDEXB|T3], [B|T4], INDEXES, S).
 
-
-getIndexFromList(0, [S|_], S).
-getIndexFromList(N, [_|T], S):- N > 0, NewN is N - 1, getIndexFromList(NewN, T, S).
-
-rmIndexFromList(0, [_|S], S).
-rmIndexFromList(N, [X|T1], [X|T2]):- N > 0, NewN is N - 1, rmIndexFromList(NewN, T1, T2).
-
 estafetasPossiveis(_, [], _, [], []).
 estafetasPossiveis(N, [estafeta(A, Transporte, C)|T1], P, [estafeta(A, Transporte, C)|T2], [N|T3]):-
 	props_transporte(Transporte, PMax, _, _),
@@ -147,33 +145,36 @@ buildCircuitosFromEstafetas(L, [INDEX|T1], [TRACK/_|T2], P, T3, S):-
 	getIndexFromList(INDEX, L, estafeta(_, Transporte, _)),
 	buildCircuitosFromEstafetas(L, T1, T2, P, [circuito(Transporte, P, TRACK)|T3], S).
 
-melhorCircuitoFromList(_, [S], S).
-melhorCircuitoFromList(dist, [A,B|T1], S):-
-	cmpCircuitos(A, B, dist, BEST),
-	melhorCircuitoFromList(dist, [BEST|T1], S).
-
 melhorCircuitoFromList(_, _, [S], S).
-melhorCircuitoFromList(time, TMax, [A,B|T1], S):-
-	cmpCircuitos(A, B, time, TMax, BEST),
-	melhorCircuitoFromList(time, TMax, [BEST|T1], S).
+melhorCircuitoFromList(DEST, dist, [A,B|T1], S):-
+	cmpCircuitos(DEST, A, B, dist, BEST),
+	melhorCircuitoFromList(DEST, dist, [BEST|T1], S).
 
-maisRapido(A, P, greedy, S):- 
+melhorCircuitoFromList(_, _, _, [S], S).
+melhorCircuitoFromList(DEST, time, TMax, [A,B|T1], S):-
+	cmpCircuitos(DEST, A, B, time, TMax, BEST),
+	melhorCircuitoFromList(DEST, time, TMax, [BEST|T1], S).
+
+
+maisRapido(A, P, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
 	getIndexFromList(0, PS, FIRST),
 	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
 	buildGreedy(A, H, STARTS, [], RESULTS),
 	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
-	melhorCircuitoFromList(dist, TRACKS, S), !.
+	melhorCircuitoFromList(A, dist, TRACKS, circuito(TRANSPORTE, P, TRACK)), 
+	reverseBack(TRACK, S), !.
 
-maisRapido(A, P, a_estrela, S):- 
+maisRapido(A, P, a_estrela, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
 	getIndexFromList(0, PS, FIRST),
 	selectBestStarts(H, PS, INDEXES, [], [FIRST], NEWINDEXES, STARTS),
 	buildAEstrela(A, H, STARTS, [], RESULTS),
 	buildCircuitosFromEstafetas(E, NEWINDEXES, RESULTS, P, [], TRACKS),
-	melhorCircuitoFromList(dist, TRACKS, S), !.
+	melhorCircuitoFromList(A, dist, TRACKS, circuito(TRANSPORTE, P, TRACK)), 
+	reverseBack(TRACK, S), !.
 
 buildGreedy(_, _, [], S, S).
 buildGreedy(A, H, [B|T1], T2, S):- 
@@ -187,21 +188,23 @@ buildAEstrela(A, H, [B|T1], T2, S):-
 	aEstrela(A, B, H, RH, R), buildAEstrela(A, H, T1, [R|T2], S).
 
 
-maisEcologico(A, P, TMax, greedy, S):- 
+maisEcologico(A, P, TMax, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
 	timeHeuristica(A, bicicleta, P, HBIKE),
 	timeHeuristica(A, moto, P, HMOTO),
 	timeHeuristica(A, carro, P, HCARRO), !,
 	buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, E2, [], RESULTS),
-	melhorCircuitoFromList(time, TMax, RESULTS, S), !.
+	melhorCircuitoFromList(A, time, TMax, RESULTS, circuito(TRANSPORTE, P, TRACK)),
+	reverseBack(TRACK, S), !.
 
-maisEcologico(A, P, TMax, a_estrela, S):- 
+maisEcologico(A, P, TMax, a_estrela, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
 	timeHeuristica(A, bicicleta, P, HBIKE),
 	timeHeuristica(A, moto, P, HMOTO),
 	timeHeuristica(A, carro, P, HCARRO), !,
 	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, E2, [], RESULTS),
-	melhorCircuitoFromList(time, TMax, RESULTS, S), !.
+	melhorCircuitoFromList(A, time, TMax, RESULTS, circuito(TRANSPORTE, P, TRACK)),
+	reverseBack(TRACK, S), !.
 
 buildGreedyTime(_, _, _, _, _, [], S, S).
 buildGreedyTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,bicicleta,CITY)|T1], T2, S):- 

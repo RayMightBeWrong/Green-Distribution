@@ -53,6 +53,13 @@ reverseBack(L, S):-
 	reverse(L2, L3), append(L, L3, S).
 
 %
+getIndexFromList(0, [S|_], S).
+getIndexFromList(N, [_|T], S):- N > 0, NewN is N - 1, getIndexFromList(NewN, T, S).
+
+rmIndexFromList(0, [_|S], S).
+rmIndexFromList(N, [X|T1], [X|T2]):- N > 0, NewN is N - 1, rmIndexFromList(NewN, T1, T2).
+
+%
 createListAresta([_], []).
 createListAresta([A,B|T1], [aresta(A, B)|T2]):- 
 	createListAresta([B|T1], T2),
@@ -104,16 +111,17 @@ timeHeuristica(F, [nodo(A)|T1], Transporte, P, [nodo(A, H)|T2]):-
 
 
 %
-avaliarCircuito(circuito(TRANSPORTE, P, L), D, T):-
-	calculaVelocidade(TRANSPORTE, P, V), createListAresta(L, _, V, D, T).
+avaliarCircuito(DEST, circuito(TRANSPORTE, P, L), D, T):-
+	avaliarCircuitoXEntregas(circuito(TRANSPORTE, [encomenda(DEST, P)], L), D, T).
 
 
 avaliarCircuitoXEntregas(circuito(_, _, [_]), 0, 0).
 avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
 	adjacente(A, B, DIST, COEF),
-	getInfoFromEncomendas(ENCOMENDAS, CITIES, PESO),
+	getInfoFromEncomendas(ENCOMENDAS, CITIES, _),
 	member(A, CITIES),
 	getIndexFromList(INDEX, CITIES, A), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
+	getInfoFromEncomendas(NEW_ENCOMENDAS, _, PESO),
 	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
 	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
 	avaliarCircuitoXEntregas(circuito(TRANSPORTE, NEW_ENCOMENDAS, [B|T]), DIST2, TIME2),
@@ -144,39 +152,39 @@ calculaTempo(D, V, C, T):- T is (D * 60) / (V * C).
 
 
 %
-cmpCircuitos(C1, C2, dist, C1):- 
-	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+cmpCircuitos(DEST, C1, C2, dist, C1):- 
+	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
 	D1 < D2.
-cmpCircuitos(C1, C2, dist, C2):- 
-	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+cmpCircuitos(DEST, C1, C2, dist, C2):- 
+	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
 	D1 > D2.
-cmpCircuitos(C1, C2, dist, C1):- 
-	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+cmpCircuitos(DEST, C1, C2, dist, C1):- 
+	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
 	D1 =:= D2,
 	isget_transporte_circuito(C1, bicicleta).
-cmpCircuitos(C1, C2, dist, C1):- 
-	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+cmpCircuitos(DEST, C1, C2, dist, C1):- 
+	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
 	D1 =:= D2,
 	isget_transporte_circuito(C1, moto), isget_transporte_circuito(C2, carro).
-cmpCircuitos(C1, C2, dist, C2):- 
-	avaliarCircuito(C1, D1, _), avaliarCircuito(C2, D2, _),
+cmpCircuitos(DEST, C1, C2, dist, C2):- 
+	avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
 	D1 =:= D2.
 
 
-cmpCircuitos(C1, C2, time, TMax, C1):- 
-	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+cmpCircuitos(DEST, C1, C2, time, TMax, C1):- 
+	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
 	T1 < TMax, T2 >= TMax.
-cmpCircuitos(C1, C2, time, TMax, C2):- 
-	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+cmpCircuitos(DEST, C1, C2, time, TMax, C2):- 
+	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
 	T2 < TMax, T1 >= TMax.
-cmpCircuitos(C1, C2, time, _, C1):- 
+cmpCircuitos(_, C1, C2, time, _, C1):- 
 	isget_transporte_circuito(C1, bicicleta), not(isget_transporte_circuito(C2, bicicleta)).
-cmpCircuitos(C1, C2, time, _, C2):- 
+cmpCircuitos(_, C1, C2, time, _, C2):- 
 	isget_transporte_circuito(C2, bicicleta), not(isget_transporte_circuito(C1, bicicleta)).
-cmpCircuitos(C1, C2, time, _, C1):- 
-	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+cmpCircuitos(DEST, C1, C2, time, _, C1):- 
+	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
 	T1 < T2.
-cmpCircuitos(C1, C2, time, _, C2):- 
-	avaliarCircuito(C1, _, T1), avaliarCircuito(C2, _, T2),
+cmpCircuitos(DEST, C1, C2, time, _, C2):- 
+	avaliarCircuito(DEST, C1, _, T1), avaliarCircuito(DEST, C2, _, T2),
 	T1 >= T2.
 
