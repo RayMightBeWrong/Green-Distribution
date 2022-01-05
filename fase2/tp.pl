@@ -40,16 +40,11 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 
 
 % encomenda(local, peso)
-xEntregas(A, TRANSPORTE, ENCOMENDAS, S):- 
-	getInfoFromEncomendas(ENCOMENDAS, CITIES, PESO), 
-	xEntregasTrack(A, CITIES, TRANSPORTE, PESO, S).
+xEntregas(A, TRANSPORTE, ENCOMENDAS, circuito(TRANSPORTE, ENCOMENDAS, S)):- 
+	getInfoFromEncomendas(ENCOMENDAS, CITIES, _), 
+	xEntregasTrack(A, CITIES, S).
 
-getInfoFromEncomendas([], [], 0).
-getInfoFromEncomendas([encomenda(LOCAL, PESO)|T1], [LOCAL|T2], NEWPESO):-
-	getInfoFromEncomendas(T1, T2, PESO2),
-	NEWPESO is PESO + PESO2. 
-
-xEntregasTrack(A, L_PONTOS, T, P, circuito(T, P, S)):- xEntregasTrack(L_PONTOS, L_PONTOS, [[A]], S).
+xEntregasTrack(A, L_PONTOS, S):- xEntregasTrack(L_PONTOS, L_PONTOS, [[A]], S).
 
 xEntregasTrack([F], L_PONTOS, [[F|T]|_], S):- allElemsInList(L_PONTOS, [F|T]), reverse([F|T], S).
 
@@ -121,6 +116,8 @@ selectBestStarts(H, [_|T1], [_|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 getIndexFromList(0, [S|_], S).
 getIndexFromList(N, [_|T], S):- N > 0, NewN is N - 1, getIndexFromList(NewN, T, S).
 
+rmIndexFromList(0, [_|S], S).
+rmIndexFromList(N, [X|T1], [X|T2]):- N > 0, NewN is N - 1, rmIndexFromList(NewN, T1, T2).
 
 estafetasPossiveis(_, [], _, [], []).
 estafetasPossiveis(N, [estafeta(A, Transporte, C)|T1], P, [estafeta(A, Transporte, C)|T2], [N|T3]):-

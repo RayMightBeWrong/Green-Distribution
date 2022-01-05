@@ -79,11 +79,6 @@ distHeuristica(F, [nodo(A)|T1], [nodo(A, H)|T2]):-
 	createListAresta(S, _, H),
 	distHeuristica(F, T1, T2).
 
-%
-distHeuristica(F, nodo(A), nodo(A, H)):- 
-        circuitoBFS(F, A, _, _, circuito(_, _, S)), 
-        createListAresta(S, _, H), !.
-
 
 %
 timeHeuristica(F, T, P, S):- mapa(L, _), timeHeuristica(F, L, T, P, S).
@@ -97,16 +92,39 @@ timeHeuristica(F, [nodo(A)|T1], Transporte, P, [nodo(A, H)|T2]):-
 	createListAresta(S, _, V, _, H),
 	timeHeuristica(F, T1, Transporte, P, T2).
 
-% mudar este
-%timeHeuristica(F, nodo(A), T, P, nodo(A, H)):- 
-%	circuitoBFS(F, A, T, P, S), 
-%	calculaVelocidade(T, P, V),
-%	createListAresta(S, _, V, _, H), !.
+
+%
+avaliarCircuito(circuito(TRANSPORTE, P, L), D, T):-
+	calculaVelocidade(TRANSPORTE, P, V), createListAresta(L, _, V, D, T).
+
+
+avaliarCircuitoXEntregas(circuito(_, _, [_]), 0, 0).
+avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
+	adjacente(A, B, DIST, COEF),
+	getInfoFromEncomendas(ENCOMENDAS, CITIES, PESO),
+	member(A, CITIES),
+	getIndexFromList(INDEX, CITIES, A), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
+	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
+	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
+	avaliarCircuitoXEntregas(circuito(TRANSPORTE, NEW_ENCOMENDAS, [B|T]), DIST2, TIME2),
+	DIST_TOTAL is DIST + DIST2,
+	TIME_TOTAL is TIME + TIME2.
+avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
+	adjacente(A, B, DIST, COEF),
+	getInfoFromEncomendas(ENCOMENDAS, _, PESO),
+	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
+	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
+	avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [B|T]), DIST2, TIME2),
+	DIST_TOTAL is DIST + DIST2,
+	TIME_TOTAL is TIME + TIME2.
 
 
 %
-avaliarCircuito(circuito(Transporte, P, L), D, T):-
-	calculaVelocidade(Transporte, P, V), createListAresta(L, _, V, D, T).
+getInfoFromEncomendas([], [], 0).
+getInfoFromEncomendas([encomenda(LOCAL, PESO)|T1], [LOCAL|T2], NEWPESO):-
+        getInfoFromEncomendas(T1, T2, PESO2),
+        NEWPESO is PESO + PESO2.
+
 
 %
 calculaVelocidade(T, P, V):- props_transporte(T, _, VMax, LOSS), V is (VMax - P * LOSS).
