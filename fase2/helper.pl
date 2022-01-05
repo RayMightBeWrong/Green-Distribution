@@ -60,6 +60,9 @@ createListAresta([A,B|T1], [aresta(A, B, D2, C2)|T2], V, NewD, NewTime):-
 	adjacente(A, B, D2, C2), calculaTempo(D2, V, C2, Time2),
 	NewD is D + D2, NewTime is Time + Time2.
 
+%
+allElemsInList([], _).
+allElemsInList([A|T1], L):- member(A, L), allElemsInList(T1, L).
 
 %
 getHeuristicaOfNodo(nodo(A), [nodo(A, H)|_], H).

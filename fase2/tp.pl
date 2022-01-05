@@ -39,6 +39,35 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 	circuitoBFS(F, Todos, S).
 
 
+% encomenda(local, peso)
+xEntregas(A, TRANSPORTE, ENCOMENDAS, S):- 
+	getInfoFromEncomendas(ENCOMENDAS, CITIES, PESO), 
+	xEntregasTrack(A, CITIES, TRANSPORTE, PESO, S).
+
+getInfoFromEncomendas([], [], 0).
+getInfoFromEncomendas([encomenda(LOCAL, PESO)|T1], [LOCAL|T2], NEWPESO):-
+	getInfoFromEncomendas(T1, T2, PESO2),
+	NEWPESO is PESO + PESO2. 
+
+xEntregasTrack(A, L_PONTOS, T, P, circuito(T, P, S)):- xEntregasTrack(L_PONTOS, L_PONTOS, [[A]], S).
+
+xEntregasTrack([F], L_PONTOS, [[F|T]|_], S):- allElemsInList(L_PONTOS, [F|T]), reverse([F|T], S).
+
+xEntregasTrack(PONTOS, L_PONTOS, [EstadosA|Outros], S):-
+	EstadosA = [Atual|_],
+	member(Atual, PONTOS), select(Atual, PONTOS, NEW_PONTOS),
+	findall([X|EstadosA],
+		(adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
+	append(Outros, Novos, Todos),
+	xEntregasTrack(NEW_PONTOS, L_PONTOS, Todos, S).
+
+xEntregasTrack(PONTOS, L_PONTOS, [EstadosA|Outros], S):-
+	EstadosA = [Atual|_],
+	findall([X|EstadosA],
+		(adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
+	append(Outros, Novos, Todos),
+	xEntregasTrack(PONTOS, L_PONTOS, Todos, S).
+
 % iterative deepening search
 circuitoIDS(A, B, T, P, circuito(T, P, S)):- loopIDS(1, A, [B], S).
 
@@ -57,17 +86,12 @@ loopIDS(N, A, [B], S):- loop_size(SIZE), N < SIZE,
 
 circuitoIDS(A, [A|T], _, [A|T]).
 circuitoIDS(_, _, 0, []).
-circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T])),					
+circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T])),
 	NewN is N - 1, NewN >= 0, 
-	%write("NewN: "), write(NewN), write('\n'), 
-	%write("Atual: "), write(B), write('\n'), 
-	%write("Estado: "), write([B|T]), write('\n'), 
-	%write("Próximo: "), write(X), write('\n'), 
-	%write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'), 
 	circuitoIDS(A, [X,B|T], NewN, S).
 
 
-
+% funciona como remove também
 select(X, [X|T], T).
 select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
 
