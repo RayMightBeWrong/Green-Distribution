@@ -3,7 +3,16 @@
 :- include('registos.pl').
 
 %
-%gera_todos(A, B, T, P, L):- findall(S, gera_circuito(A, B, T, P, S), L).
+gera_todos(A, PESO, S):- 
+	listaEstafetas(E), estafetasPossiveis(0, E, PESO, ELEGIVEIS, _),
+	gera_todos(A, PESO, ELEGIVEIS, [], S).
+
+gera_todos(_, _, [], S, S).
+gera_todos(A, PESO, [estafeta(_,TRANSPORTE,CITY)|T1], T2, S):-
+	findall(RESULT, (circuitoDFS(A, CITY, TRANSPORTE, PESO, RESULT), 
+			 write('RESULT: '), write(RESULT), write('\n')), RESULTS),
+	append(RESULTS, T2, NEW_RESULTS),
+	gera_todos(A, PESO, T1, NEW_RESULTS, S).
 
 
 % A e B -> nodos de partida e de chegada, respetivamente
@@ -15,27 +24,18 @@ circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], S).
 
 circuitoDFS(A, [A|T], [A|T]).
 circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
-	%write("Atual: "), write(B), write('\n'),
-	%write("Próximo: "), write(X), write('\n'),
-	%write("Estado: "), write([B|T]), write('\n'),
-	%write("Próximo Estado: "), write([X,B|T]), write('\n'), write('\n'),
 	circuitoDFS(A, [X,B|T], S).
 			
 % breadth first search 
 circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], S).
 
-circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). %write("final: "), write(S), write("\n").
+circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). 
 
 circuitoBFS(F, [EstadosA|Outros], S):-
 	EstadosA = [Atual|_],
 	findall([X|EstadosA],
 		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
 	append(Outros, Novos, Todos),
-	%write("Nodo atual: "), write(Atual), write("\n"),
-	%write("EstadosA: "), write(EstadosA), write("\n"),
-	%write("Novos: "), write(Novos), write("\n"),
-	%write("Outros: "), write(Outros), write("\n"),
-	%write("estado: "), write(Todos), write("\n"), write("\n"),
 	circuitoBFS(F, Todos, S).
 
 
