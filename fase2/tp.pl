@@ -2,10 +2,11 @@
 :- include('helper.pl').
 :- include('registos.pl').
 
-%
+% cria circuito a partir dos seus elementos constituintes
 createCircuito(TRANSPORTE, PESO, TRACK, circuito(TRANSPORTE, PESO, TRACK)).
 
 
+% gera todos os circuitos possíveis para entregar uma encomenda
 gera_todos(A, PESO, S):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, PESO, ELEGIVEIS, _),
 	gera_todos(A, PESO, ELEGIVEIS, [], S).
@@ -17,16 +18,13 @@ gera_todos(A, PESO, [estafeta(_,TRANSPORTE,CITY)|T1], T2, S):-
 			 rmIndexFromList(0, TRACK2, NEW_TRACK2),
 			 append(TRACK1, NEW_TRACK2, THE_TRACK),
 			 createCircuito(TRANSPORTE, PESO, THE_TRACK, RESULT),
-			 write('RESULT: '), write(RESULT), write('\n')), RESULTS),
+			 write('CIRCUITO: '), write(RESULT), write('\n')), RESULTS),
 	append(RESULTS, T2, NEW_RESULTS),
 	gera_todos(A, PESO, T1, NEW_RESULTS, S).
 
 
-% A e B -> nodos de partida e de chegada, respetivamente
-% T -> transporte
-% P -> peso da encomenda
 
-% depth first search
+% encontra circuito através de depth first search
 circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], TRACK), reverseBack(TRACK, S).
 
 circuitoDFS(A, [A|T], [A|T]).
@@ -36,7 +34,7 @@ circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
 circuitoDFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], S).
 
 
-% breadth first search 
+% encontra circuito através de breadth first search 
 circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], TRACK), reverseBack(TRACK, S).
 
 circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). 
@@ -52,6 +50,7 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], S).
 
 
+% encontra circuito para fazer múltiplas entregas no mesmo trajeto
 % encomenda(local, peso)
 xEntregas(A, TRANSPORTE, ENCOMENDAS, circuito(TRANSPORTE, ENCOMENDAS, S)):- 
 	getInfoFromEncomendas(ENCOMENDAS, CITIES, _), 
@@ -80,7 +79,8 @@ xEntregasTrack(PONTOS, L_PONTOS, [EstadosA|Outros], S):-
 	append(Outros, Novos, Todos),
 	xEntregasTrack(PONTOS, L_PONTOS, Todos, S).
 
-% iterative deepening search
+
+% encontra circuito através de iterative deepening search
 circuitoIDS(A, B, T, P, circuito(T, P, S)):- loopIDS(1, A, [B], TRACK), reverseBack(TRACK, S).
 
 % o número de pontos no mapa
@@ -103,7 +103,8 @@ circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T]
 	NewN is N - 1, NewN >= 0, 
 	circuitoIDS(A, [X,B|T], NewN, S).
 
-%
+
+% seleciona os melhores pontos de partida segundo a heurística
 selectBestStarts(_, [], _, INDEXES, S, INDEXES, S).
 selectBestStarts(H, [_|T1], [INDEX0|T2], [], L, INDEXES, S):- selectBestStarts(H, T1, T2, [INDEX0], L, INDEXES, S).
 
@@ -120,13 +121,14 @@ selectBestStarts(H, [_|T1], [_|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 	selectBestStarts(H, T1, T2, [INDEXB|T3], [B|T4], INDEXES, S).
 
 
+
 buildCircuitosFromEstafetas(_, [], _, _, S, S).
 buildCircuitosFromEstafetas(L, [INDEX|T1], [TRACK/_|T2], P, T3, S):-
 	getIndexFromList(INDEX, L, estafeta(_, Transporte, _)),
 	buildCircuitosFromEstafetas(L, T1, T2, P, [circuito(Transporte, P, TRACK)|T3], S).
 
 
-%
+% seleciona o circuito mais rápido (com menor distância) para realizar uma dada entrega
 maisRapido(A, P, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
@@ -159,7 +161,7 @@ buildAEstrela(A, H, [B|T1], T2, S):-
 	aEstrela(A, B, H, RH, R), buildAEstrela(A, H, T1, [R|T2], S).
 
 
-%
+% seleciona o circuito mais ecológico (segundo o indicador de produtividade tempo) para realizar uma dada entrega
 maisEcologico(A, P, TMax, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
 	timeHeuristica(A, bicicleta, P, HBIKE),
@@ -211,7 +213,7 @@ buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,carro,CITY)|T1], T2, S
 	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(carro, P, TRACK)|T2], S). 
 
 
-%
+% encontra um trajeto a partir de uma heurística usando a estratégia de procura greedy
 greedy(A, nodo(B), H, RH, S/Total):-
 	greedy(A, H, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
@@ -234,7 +236,7 @@ select_greedy([P/C/H1, _/_/H2|T], Best):-
 select_greedy([_|T], Best):- select_greedy(T, Best).
 
 
-%
+% encontra um trajeto a partir de uma heurística usando a estratégia de procura A*
 aEstrela(A, nodo(B), H, RH, S/Total):-
 	aEstrela(A, H, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
@@ -249,6 +251,8 @@ aEstrela(F, H, L, S):-
 	aEstrela(F, H, New2L, S).
 
 
+% encontra um trajeto a partir de uma heurística usando a estratégia de procura A*
+% (ligeiramente modificado para poder calcular o custo associado ao tempo)
 aEstrelaTime(A, nodo(B), H, RH, V, S/Total):-
 	aEstrelaTime(A, H, V, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
@@ -289,7 +293,7 @@ adj2(H, V, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	NewC is C + TIME.
 
 
-%
+% encontra o circuito no sistema por onde passam mais entregas
 circuitosMaisEntregas(RESULT) :- 
 	findall(Cir,registo(_,_,circuito(Cir),_),S), !,
 	maisEntregas(S, [], TRACKS, [], VALORES),
@@ -314,7 +318,8 @@ selectBest(S, [A,_|T1], [NR_A,NR_B|T2]):-
 selectBest(S, [_,B|T1], [NR_A,NR_B|T2]):- 
 	NR_A =< NR_B, selectBest(S, [B|T1], [NR_B|T2]).
 
-%
+
+% encontra o circuito no sistema por onde passa o maior valor total de peso
 circuitosMaisPeso(RESULT) :- 
 	findall((Cir,PESO), (registo(ARG1,encomenda(A2,A3,PESO,A4,A5),circuito(Cir),ARG4),
 				not(excecao(registo(ARG1, encomenda(A2,A3,PESO,A4,A5), circuito(Cir), ARG4)))),S), !,
@@ -333,7 +338,7 @@ maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):-
 	maisPeso(T1, [TRACK|T2], TRACKS, [PESO|T3], VALORES).
 
 
-%
+% compara 2 circuitos e devolve o melhor segundo o indicador de produtividade desejado
 cmpCircuitos(DEST, C1, C2, dist, C1):-
         avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
         D1 < D2.
@@ -371,7 +376,7 @@ cmpCircuitos(DEST, C1, C2, time, _, C2):-
         T1 >= T2.
 
 
-%
+% averigua a diferença entre fazer um conjunto de entregas simultaneamente e sequencialmente
 cmpMultiplasEntregas(A, ENCOMENDAS, TRANSPORTE, DIST_ONE, TIME_ONE, DIST_MULTIPLAS, TIME_MULTIPLAS):-
 	getInfoFromEncomendas(ENCOMENDAS, _, PESO_TOTAL),
 	props_transporte(TRANSPORTE, PMAX, _, _), PMAX >= PESO_TOTAL,
@@ -390,7 +395,8 @@ buildMultiplasEntregas(A, TRANSPORTE, [encomenda(B,PESO)|T1], NEWDIST, NEWTIME):
 	buildMultiplasEntregas(A, TRANSPORTE, T1, DIST2, TIME2),
 	NEWDIST is DIST + DIST2, NEWTIME is TIME + TIME2.
 
-%
+
+% avalia um circuito de acordo com os indicadores de produtividade
 avaliarCircuito(DEST, circuito(TRANSPORTE, P, L), D, T):-
         avaliarCircuitoXEntregas(circuito(TRANSPORTE, [encomenda(DEST, P)], L), D, T).
 
@@ -406,7 +412,7 @@ avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, 
         calculaTempo(DIST, VELOCIDADE, COEF, TIME),
         avaliarCircuitoXEntregas(circuito(TRANSPORTE, NEW_ENCOMENDAS, [B|T]), DIST2, TIME2),
         DIST_TOTAL is DIST + DIST2,
-        TIME_TOTAL is TIME + TIME2.
+        TIME_TOTAL is TIME + TIME2 + 5. %5 minutos que demora a fazer a entrega
 avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
         adjacente(A, B, DIST, COEF),
         getInfoFromEncomendas(ENCOMENDAS, _, PESO),

@@ -2,6 +2,8 @@
 :- dynamic registo/4.
 :- dynamic estafeta/3.
 
+
+% estafeta(nome, meio de transporte, ponto de partida)
 estafeta(brendan, moto, littleroot).
 estafeta(may, bicicleta, littleroot).
 estafeta(wally, moto, verdanturf).
