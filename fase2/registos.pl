@@ -11,7 +11,10 @@ estafeta(iris, bicicleta, mossdeep).
 estafeta(iris, carro, mossdeep). 
 
 
-%registo(entrega(estafeta, transporte(veiculo)), encomenda(cliente, local, volume, preço, classificação),circuito([cidades]), prazo(hora_limite, data_limite, hora_de_entrega, data_de_entrega))
+%registo(entrega(estafeta, transporte(veiculo)), 
+%	encomenda(cliente, local, volume, preço, classificação), 
+%	circuito([cidades]), 
+%	prazo(hora_limite, data_limite, hora_de_entrega, data_de_entrega))
 %registo(A, B, C, D)
 
 registo(entrega(may, transporte(bicicleta)), encomenda(c1, slateport, 4, 20, 5), circuito([littleroot,oldale,slateport,oldale,littleroot]),prazo(10/45, 15/11/2021, 10/15, 15/11/2021)). %may
@@ -59,6 +62,8 @@ registo(entrega(wally, transporte(moto)), encomenda(c20, littleroot, 6, 50, 4),c
 registo(entrega(wally, transporte(moto)), encomenda(c21, mauville, 18, 60, 4),circuito([verdanturf,mauville,verdanturf]), prazo(20/45, 18/11/2021, 18/37, 18/11/2021)).
 
 -registo(Ent,Enc,Cir,Pra) :- nao(registo(Ent,Enc,Cir,Pra)) , nao(excecao(registo(Ent,Enc,Cir,Pra))).
+
+-estafeta(NOME,TRANSPORTE,CITY) :- nao(estafeta(NOME,TRANSPORTE,CITY)) , nao(excecao(estafeta(NOME,TRANSPORTE,CITY))).
 
 % Tipo incerto
 excecao(registo(Ent,Enc,Cir,prazo(H,D,_,DE))) :- registo(Ent,Enc,Cir,prazo(H,D,xpto1,DE)).

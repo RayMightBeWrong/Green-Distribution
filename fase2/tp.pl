@@ -3,13 +3,20 @@
 :- include('registos.pl').
 
 %
+createCircuito(TRANSPORTE, PESO, TRACK, circuito(TRANSPORTE, PESO, TRACK)).
+
+
 gera_todos(A, PESO, S):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, PESO, ELEGIVEIS, _),
 	gera_todos(A, PESO, ELEGIVEIS, [], S).
 
 gera_todos(_, _, [], S, S).
 gera_todos(A, PESO, [estafeta(_,TRANSPORTE,CITY)|T1], T2, S):-
-	findall(RESULT, (circuitoDFS(A, CITY, TRANSPORTE, PESO, RESULT), 
+	findall(RESULT, (circuitoDFS_noReverse(A, CITY, TRANSPORTE, PESO, circuito(_,_,TRACK1)),
+			 circuitoDFS_noReverse(CITY, A, TRANSPORTE, 0, circuito(_,_,TRACK2)),
+			 rmIndexFromList(0, TRACK2, NEW_TRACK2),
+			 append(TRACK1, NEW_TRACK2, THE_TRACK),
+			 createCircuito(TRANSPORTE, PESO, THE_TRACK, RESULT),
 			 write('RESULT: '), write(RESULT), write('\n')), RESULTS),
 	append(RESULTS, T2, NEW_RESULTS),
 	gera_todos(A, PESO, T1, NEW_RESULTS, S).
@@ -25,9 +32,12 @@ circuitoDFS(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], TRACK), reverse
 circuitoDFS(A, [A|T], [A|T]).
 circuitoDFS(A, [B|T], S):- adjacente(X, B, _, _), not(member(X, [B|T])),
 	circuitoDFS(A, [X,B|T], S).
-			
+
+circuitoDFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoDFS(A, [B], S).
+
+
 % breadth first search 
-circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], TRACK),reverseBack(TRACK, S) .
+circuitoBFS(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], TRACK), reverseBack(TRACK, S).
 
 circuitoBFS(F, [[F|T]|_], S):- reverse([F|T], S). 
 
@@ -39,16 +49,7 @@ circuitoBFS(F, [EstadosA|Outros], S):-
 	circuitoBFS(F, Todos, S).
 
 
-circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)	):- circuitoBFS_noReverse(B, [[A]], S).
-
-circuitoBFS_noReverse(F, [[F|T]|_], S):- reverse([F|T], S). 
-
-circuitoBFS_noReverse(F, [EstadosA|Outros], S):-
-	EstadosA = [Atual|_],
-	findall([X|EstadosA],
-		(F \== Atual, adjacente(Atual, X, _, _), not(member(X, EstadosA))), Novos),
-	append(Outros, Novos, Todos),
-	circuitoBFS_noReverse(F, Todos, S).
+circuitoBFS_noReverse(A, B, T, P, circuito(T, P, S)):- circuitoBFS(B, [[A]], S).
 
 
 % encomenda(local, peso)
@@ -102,18 +103,7 @@ circuitoIDS(A, [B|T], N, S):- A \= B, adjacente(X, B, _, _), not(member(X, [B|T]
 	NewN is N - 1, NewN >= 0, 
 	circuitoIDS(A, [X,B|T], NewN, S).
 
-
-% funciona como remove também
-select(X, [X|T], T).
-select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
-
-
-partidasToNodos(S):- listaEstafetas(L), partidasToNodos(L, S).
-
-partidasToNodos([], []).
-partidasToNodos([estafeta(_, _, P)|T1], [nodo(P)|T2]):- partidasToNodos(T1, T2).
-
-
+%
 selectBestStarts(_, [], _, INDEXES, S, INDEXES, S).
 selectBestStarts(H, [_|T1], [INDEX0|T2], [], L, INDEXES, S):- selectBestStarts(H, T1, T2, [INDEX0], L, INDEXES, S).
 
@@ -129,33 +119,14 @@ selectBestStarts(H, [A|T1], [INDEXA|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 selectBestStarts(H, [_|T1], [_|T2], [INDEXB|T3], [B|T4], INDEXES, S):-
 	selectBestStarts(H, T1, T2, [INDEXB|T3], [B|T4], INDEXES, S).
 
-estafetasPossiveis(_, [], _, [], []).
-estafetasPossiveis(N, [estafeta(A, Transporte, C)|T1], P, [estafeta(A, Transporte, C)|T2], [N|T3]):-
-	props_transporte(Transporte, PMax, _, _),
-	P =< PMax, 
-	NewN is N + 1,
-	estafetasPossiveis(NewN, T1, P, T2, T3).
-estafetasPossiveis(N, [_|T1], P, T2, T3):- 
-	NewN is N + 1,
-	estafetasPossiveis(NewN, T1, P, T2, T3).
-
 
 buildCircuitosFromEstafetas(_, [], _, _, S, S).
 buildCircuitosFromEstafetas(L, [INDEX|T1], [TRACK/_|T2], P, T3, S):-
 	getIndexFromList(INDEX, L, estafeta(_, Transporte, _)),
 	buildCircuitosFromEstafetas(L, T1, T2, P, [circuito(Transporte, P, TRACK)|T3], S).
 
-melhorCircuitoFromList(_, _, [S], S).
-melhorCircuitoFromList(DEST, dist, [A,B|T1], S):-
-	cmpCircuitos(DEST, A, B, dist, BEST),
-	melhorCircuitoFromList(DEST, dist, [BEST|T1], S).
 
-melhorCircuitoFromList(_, _, _, [S], S).
-melhorCircuitoFromList(DEST, time, TMax, [A,B|T1], S):-
-	cmpCircuitos(DEST, A, B, time, TMax, BEST),
-	melhorCircuitoFromList(DEST, time, TMax, [BEST|T1], S).
-
-
+%
 maisRapido(A, P, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, INDEXES),
 	distHeuristica(A, H), !, partidasToNodos(E2, PS),
@@ -188,6 +159,7 @@ buildAEstrela(A, H, [B|T1], T2, S):-
 	aEstrela(A, B, H, RH, R), buildAEstrela(A, H, T1, [R|T2], S).
 
 
+%
 maisEcologico(A, P, TMax, greedy, circuito(TRANSPORTE, P, S)):- 
 	listaEstafetas(E), estafetasPossiveis(0, E, P, E2, _),
 	timeHeuristica(A, bicicleta, P, HBIKE),
@@ -239,6 +211,7 @@ buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, [estafeta(_,carro,CITY)|T1], T2, S
 	buildAEstrelaTime(A, P, HBIKE, HMOTO, HCARRO, T1, [circuito(carro, P, TRACK)|T2], S). 
 
 
+%
 greedy(A, nodo(B), H, RH, S/Total):-
 	greedy(A, H, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
@@ -261,7 +234,7 @@ select_greedy([P/C/H1, _/_/H2|T], Best):-
 select_greedy([_|T], Best):- select_greedy(T, Best).
 
 
-
+%
 aEstrela(A, nodo(B), H, RH, S/Total):-
 	aEstrela(A, H, [[B]/0/RH], R/Total/_),
 	reverse(R, S).
@@ -315,16 +288,13 @@ adj2(H, V, [A|T]/C/_, [B,A|T]/NewC/RH):-
 	calculaTempo(D, V, COEF, TIME),
 	NewC is C + TIME.
 
+
+%
 circuitosMaisEntregas(RESULT) :- 
 	findall(Cir,registo(_,_,circuito(Cir),_),S), !,
 	maisEntregas(S, [], TRACKS, [], VALORES),
 	selectBest(RESULT, TRACKS, VALORES), !.
 
-selectBest(S, [S], _).
-selectBest(S, [A,_|T1], [NR_A,NR_B|T2]):- 
-	NR_A > NR_B, selectBest(S, [A|T1], [NR_A|T2]).
-selectBest(S, [_,B|T1], [NR_A,NR_B|T2]):- 
-	NR_A =< NR_B, selectBest(S, [B|T1], [NR_B|T2]).
 
 maisEntregas([], TRACKS, TRACKS, VALORES, VALORES).
 maisEntregas([TRACK|T1], T2, TRACKS, T3, VALORES):- 
@@ -338,6 +308,13 @@ maisEntregas([TRACK|T1], T2, TRACKS, T3, VALORES):-
 	maisEntregas(T1, [TRACK|T2], TRACKS, [1|T3], VALORES).
 
 
+selectBest(S, [S], _).
+selectBest(S, [A,_|T1], [NR_A,NR_B|T2]):- 
+	NR_A > NR_B, selectBest(S, [A|T1], [NR_A|T2]).
+selectBest(S, [_,B|T1], [NR_A,NR_B|T2]):- 
+	NR_A =< NR_B, selectBest(S, [B|T1], [NR_B|T2]).
+
+%
 circuitosMaisPeso(RESULT) :- 
 	findall((Cir,PESO), (registo(ARG1,encomenda(A2,A3,PESO,A4,A5),circuito(Cir),ARG4),
 				not(excecao(registo(ARG1, encomenda(A2,A3,PESO,A4,A5), circuito(Cir), ARG4)))),S), !,
@@ -356,8 +333,7 @@ maisPeso([(TRACK,PESO)|T1], T2, TRACKS, T3, VALORES):-
 	maisPeso(T1, [TRACK|T2], TRACKS, [PESO|T3], VALORES).
 
 
-
-
+%
 cmpCircuitos(DEST, C1, C2, dist, C1):-
         avaliarCircuito(DEST, C1, D1, _), avaliarCircuito(DEST, C2, D2, _),
         D1 < D2.
@@ -395,6 +371,7 @@ cmpCircuitos(DEST, C1, C2, time, _, C2):-
         T1 >= T2.
 
 
+%
 cmpMultiplasEntregas(A, ENCOMENDAS, TRANSPORTE, DIST_ONE, TIME_ONE, DIST_MULTIPLAS, TIME_MULTIPLAS):-
 	getInfoFromEncomendas(ENCOMENDAS, _, PESO_TOTAL),
 	props_transporte(TRANSPORTE, PMAX, _, _), PMAX >= PESO_TOTAL,
@@ -412,3 +389,29 @@ buildMultiplasEntregas(A, TRANSPORTE, [encomenda(B,PESO)|T1], NEWDIST, NEWTIME):
 	avaliarCircuito(B, TRACK, DIST, TIME),
 	buildMultiplasEntregas(A, TRANSPORTE, T1, DIST2, TIME2),
 	NEWDIST is DIST + DIST2, NEWTIME is TIME + TIME2.
+
+%
+avaliarCircuito(DEST, circuito(TRANSPORTE, P, L), D, T):-
+        avaliarCircuitoXEntregas(circuito(TRANSPORTE, [encomenda(DEST, P)], L), D, T).
+
+
+avaliarCircuitoXEntregas(circuito(_, _, [_]), 0, 0).
+avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
+        adjacente(A, B, DIST, COEF),
+        getInfoFromEncomendas(ENCOMENDAS, CITIES, _),
+        member(A, CITIES),
+        findIndexFromList(A, CITIES, INDEX), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
+        getInfoFromEncomendas(NEW_ENCOMENDAS, _, PESO),
+        calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
+        calculaTempo(DIST, VELOCIDADE, COEF, TIME),
+        avaliarCircuitoXEntregas(circuito(TRANSPORTE, NEW_ENCOMENDAS, [B|T]), DIST2, TIME2),
+        DIST_TOTAL is DIST + DIST2,
+        TIME_TOTAL is TIME + TIME2.
+avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
+        adjacente(A, B, DIST, COEF),
+        getInfoFromEncomendas(ENCOMENDAS, _, PESO),
+        calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
+        calculaTempo(DIST, VELOCIDADE, COEF, TIME),
+        avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [B|T]), DIST2, TIME2),
+        DIST_TOTAL is DIST + DIST2,
+        TIME_TOTAL is TIME + TIME2.

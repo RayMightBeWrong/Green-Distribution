@@ -45,6 +45,22 @@ props_transporte(carro, 100, 25, 0.1).
 %
 listaEstafetas(E):- findall(estafeta(A,B,C), (estafeta(A,B,C)), E).
 
+estafetasPossiveis(_, [], _, [], []).
+estafetasPossiveis(N, [estafeta(A, Transporte, C)|T1], P, [estafeta(A, Transporte, C)|T2], [N|T3]):-
+        props_transporte(Transporte, PMax, _, _),
+        P =< PMax,
+        NewN is N + 1,
+        estafetasPossiveis(NewN, T1, P, T2, T3).
+estafetasPossiveis(N, [_|T1], P, T2, T3):-
+        NewN is N + 1,
+        estafetasPossiveis(NewN, T1, P, T2, T3).
+
+partidasToNodos(S):- listaEstafetas(L), partidasToNodos(L, S).
+
+partidasToNodos([], []).
+partidasToNodos([estafeta(_, _, P)|T1], [nodo(P)|T2]):- partidasToNodos(T1, T2).
+
+
 %
 reverseBack([], []).
 reverseBack(L, S):- 
@@ -53,6 +69,10 @@ reverseBack(L, S):-
 	reverse(L2, L3), append(L, L3, S).
 
 %
+% funciona como remove também
+select(X, [X|T], T).
+select(X, [Y|T1], [Y|T2]):- select(X, T1, T2).
+
 getIndexFromList(0, [S|_], S).
 getIndexFromList(N, [_|T], S):- N > 0, NewN is N - 1, getIndexFromList(NewN, T, S).
 
@@ -117,38 +137,21 @@ timeHeuristica(F, [nodo(A)|T1], Transporte, P, [nodo(A, H)|T2]):-
 
 
 %
-avaliarCircuito(DEST, circuito(TRANSPORTE, P, L), D, T):-
-	avaliarCircuitoXEntregas(circuito(TRANSPORTE, [encomenda(DEST, P)], L), D, T).
-
-
-avaliarCircuitoXEntregas(circuito(_, _, [_]), 0, 0).
-avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
-	adjacente(A, B, DIST, COEF),
-	getInfoFromEncomendas(ENCOMENDAS, CITIES, _),
-	member(A, CITIES),
-	findIndexFromList(A, CITIES, INDEX), rmIndexFromList(INDEX, ENCOMENDAS, NEW_ENCOMENDAS),
-	getInfoFromEncomendas(NEW_ENCOMENDAS, _, PESO),
-	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
-	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
-	avaliarCircuitoXEntregas(circuito(TRANSPORTE, NEW_ENCOMENDAS, [B|T]), DIST2, TIME2),
-	DIST_TOTAL is DIST + DIST2,
-	TIME_TOTAL is TIME + TIME2.
-avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [A,B|T]), DIST_TOTAL, TIME_TOTAL):-
-	adjacente(A, B, DIST, COEF),
-	getInfoFromEncomendas(ENCOMENDAS, _, PESO),
-	calculaVelocidade(TRANSPORTE, PESO, VELOCIDADE),
-	calculaTempo(DIST, VELOCIDADE, COEF, TIME),
-	avaliarCircuitoXEntregas(circuito(TRANSPORTE, ENCOMENDAS, [B|T]), DIST2, TIME2),
-	DIST_TOTAL is DIST + DIST2,
-	TIME_TOTAL is TIME + TIME2.
-
-
-%
 getInfoFromEncomendas([], [], 0).
 getInfoFromEncomendas([encomenda(LOCAL, PESO)|T1], [LOCAL|T2], NEWPESO):-
         getInfoFromEncomendas(T1, T2, PESO2),
         NEWPESO is PESO + PESO2.
 
+%
+melhorCircuitoFromList(_, _, [S], S).
+melhorCircuitoFromList(DEST, dist, [A,B|T1], S):-
+        cmpCircuitos(DEST, A, B, dist, BEST),
+        melhorCircuitoFromList(DEST, dist, [BEST|T1], S).
+
+melhorCircuitoFromList(_, _, _, [S], S).
+melhorCircuitoFromList(DEST, time, TMax, [A,B|T1], S):-
+        cmpCircuitos(DEST, A, B, time, TMax, BEST),
+        melhorCircuitoFromList(DEST, time, TMax, [BEST|T1], S).
 
 %
 calculaVelocidade(T, P, V):- props_transporte(T, _, VMax, LOSS), V is (VMax - P * LOSS).
